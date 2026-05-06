@@ -1,0 +1,2669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ria Pet Mart — Invoice & Pricing Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal: #0F6E56;
+  --teal-light: #E1F5EE;
+  --teal-mid: #1D9E75;
+  --amber: #BA7517;
+  --amber-light: #FAEEDA;
+  --coral: #D85A30;
+  --coral-light: #FAECE7;
+  --gray-100: #F1EFE8;
+  --gray-200: #D3D1C7;
+  --gray-500: #888780;
+  --gray-800: #2C2C2A;
+  --white: #FFFFFF;
+  --bg: #F7F6F1;
+  --surface: #FFFFFF;
+  --text: #1A1A18;
+  --text-muted: #5F5E5A;
+  --border: rgba(0,0,0,0.08);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* LAYOUT */
+.app { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px;
+  background: var(--gray-800);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0;
+  position: fixed;
+  height: 100vh;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  padding: 0 20px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 16px;
+}
+
+.sidebar-logo .brand {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.sidebar-logo .sub {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 0;
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  transition: all 0.15s;
+  border-left: 3px solid transparent;
+}
+
+.nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
+.nav-item.active { color: white; background: rgba(255,255,255,0.08); border-left-color: var(--teal-mid); }
+
+.nav-icon { font-size: 16px; width: 18px; }
+
+.sidebar-section {
+  padding: 12px 20px 6px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+  margin-top: 8px;
+}
+
+/* MAIN */
+.main {
+  margin-left: 220px;
+  flex: 1;
+  padding: 32px;
+  max-width: calc(100vw - 220px);
+}
+
+/* PAGES */
+.page { display: none; }
+.page.active { display: block; }
+
+/* HEADER */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.page-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+/* GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+/* STAT CARDS */
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.stat-value { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; margin: 4px 0 2px; }
+.stat-note { font-size: 11px; color: var(--teal); }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-primary { background: var(--teal); color: white; }
+.btn-primary:hover { background: var(--teal-mid); }
+.btn-secondary { background: var(--gray-100); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--gray-200); }
+.btn-amber { background: var(--amber-light); color: var(--amber); border: 1px solid rgba(186,117,23,0.2); }
+.btn-coral { background: var(--coral-light); color: var(--coral); border: 1px solid rgba(216,90,48,0.2); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-lg { padding: 12px 24px; font-size: 14px; }
+
+/* BADGE */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.badge-teal { background: var(--teal-light); color: var(--teal); }
+.badge-amber { background: var(--amber-light); color: var(--amber); }
+.badge-coral { background: var(--coral-light); color: var(--coral); }
+
+/* INVOICE UPLOAD ZONE */
+.upload-zone {
+  border: 2px dashed var(--gray-200);
+  border-radius: var(--radius);
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg);
+}
+
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--teal-mid);
+  background: var(--teal-light);
+}
+
+.upload-icon { font-size: 40px; margin-bottom: 12px; }
+.upload-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.upload-hint { font-size: 12px; color: var(--text-muted); }
+
+/* TABLE */
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 12px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--gray-100); }
+
+/* FORM */
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 5px; color: var(--text-muted); }
+.form-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  background: var(--surface);
+  color: var(--text);
+}
+.form-input:focus { outline: none; border-color: var(--teal-mid); }
+
+/* PRICING CARD */
+.pricing-platform {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+
+.platform-name {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.platform-price {
+  font-family: 'DM Mono', monospace;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.platform-margin {
+  font-size: 11px;
+  color: var(--teal);
+  margin-top: 4px;
+}
+
+/* AI LOADING */
+.ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--teal-light);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--teal);
+  margin: 12px 0;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--teal-light);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ALERT */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin: 12px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.alert-success { background: #EAF3DE; color: #3B6D11; border: 1px solid #C0DD97; }
+.alert-info { background: var(--teal-light); color: var(--teal); border: 1px solid #9FE1CB; }
+.alert-warning { background: var(--amber-light); color: var(--amber); border: 1px solid #FAC775; }
+
+/* SETUP BANNER */
+.setup-banner {
+  background: linear-gradient(135deg, #0F6E56 0%, #1D9E75 100%);
+  border-radius: var(--radius);
+  padding: 24px;
+  color: white;
+  margin-bottom: 24px;
+}
+
+.setup-banner h2 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.setup-banner p { font-size: 13px; opacity: 0.85; }
+
+/* MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  padding: 28px;
+  width: 90%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+.modal-close { cursor: pointer; font-size: 20px; color: var(--text-muted); background: none; border: none; }
+
+/* TABS */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.tab {
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+/* SECTION SPACING */
+.section { margin-bottom: 24px; }
+
+/* PRODUCT GRID */
+.product-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: box-shadow 0.15s;
+}
+.product-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.product-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.product-sku { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); }
+
+/* PROMO CARD */
+.promo-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  background: var(--amber-light);
+  border-color: rgba(186,117,23,0.2);
+}
+.promo-title { font-weight: 600; font-size: 13px; color: var(--amber); margin-bottom: 6px; }
+.promo-desc { font-size: 12px; color: #6B4A0A; line-height: 1.5; }
+
+/* SHEET LOG */
+.sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.sheet-row:last-child { border-bottom: none; }
+.sheet-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-synced { background: #639922; }
+.status-pending { background: var(--amber); }
+.status-error { background: var(--coral); }
+
+/* CONFIG SECTION */
+.config-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.config-title { font-weight: 600; font-size: 14px; margin-bottom: 14px; }
+
+/* CAMERA */
+#camera-preview {
+  width: 100%;
+  max-height: 300px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: #000;
+  display: none;
+}
+
+.capture-container { position: relative; }
+
+/* SCROLL */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .sidebar { width: 180px; }
+  .main { margin-left: 180px; padding: 20px; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* NOTIFICATION */
+.notification {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--gray-800);
+  color: white;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  z-index: 2000;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s;
+  max-width: 320px;
+}
+.notification.show { opacity: 1; transform: translateY(0); }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:none; position:fixed; inset:0; background:#F7F6F1; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+  <div style="background:#2C2C2A; border-radius:16px; padding:40px; width:100%; max-width:380px; margin:20px;">
+    <div style="text-align:center; margin-bottom:28px;">
+      <div style="font-size:32px; margin-bottom:8px;">🐾</div>
+      <div style="font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:white; letter-spacing:-0.5px;">Ria Pet Mart</div>
+      <div style="font-size:12px; color:rgba(255,255,255,0.4); letter-spacing:1.5px; text-transform:uppercase; margin-top:4px;">Invoice & Pricing Hub</div>
+    </div>
+    <div id="login-error" style="display:none; background:#FCEBEB; color:#A32D2D; border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:14px; text-align:center;"></div>
+    <div style="margin-bottom:12px;">
+      <label style="display:block; font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Username</label>
+      <input id="login-user" type="text" placeholder="Enter username" autocomplete="username"
+        style="width:100%; padding:11px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.07); color:white; font-size:14px; font-family:'Inter',sans-serif; outline:none;"
+        onkeydown="if(event.key==='Enter') attemptLogin()">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block; font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">Password</label>
+      <input id="login-pass" type="password" placeholder="Enter password" autocomplete="current-password"
+        style="width:100%; padding:11px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.07); color:white; font-size:14px; font-family:'Inter',sans-serif; outline:none;"
+        onkeydown="if(event.key==='Enter') attemptLogin()">
+    </div>
+    <button onclick="attemptLogin()"
+      style="width:100%; padding:13px; background:#1D9E75; color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; letter-spacing:0.3px;">
+      Sign In →
+    </button>
+    <div style="text-align:center; margin-top:16px; font-size:11px; color:rgba(255,255,255,0.2);">Change credentials in Settings after login</div>
+  </div>
+</div>
+
+<div class="app" id="main-app" style="display:none;">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">🐾 Ria Pet Mart</div>
+      <div class="sub">Invoice & Pricing Hub</div>
+    </div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('scan')">
+      <span class="nav-icon">📷</span> Scan Invoice
+    </div>
+    <div class="nav-item" onclick="showPage('products')">
+      <span class="nav-icon">📦</span> Products
+    </div>
+    <div class="nav-item" onclick="showPage('pricing')">
+      <span class="nav-icon">💰</span> Pricing
+    </div>
+    <div class="nav-item" onclick="showPage('promotions')">
+      <span class="nav-icon">🎁</span> Promotions
+    </div>
+    <div class="sidebar-section">System</div>
+    <div class="nav-item" onclick="showPage('sheets')">
+      <span class="nav-icon">📋</span> Google Sheets
+    </div>
+    <div class="nav-item" onclick="showPage('settings')">
+      <span class="nav-icon">⚙️</span> Settings
+    </div>
+    <div style="flex:1"></div>
+    <div class="nav-item" onclick="logout()" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.06); padding-top:12px;">
+      <span class="nav-icon">🚪</span> <span style="font-size:12px">Logout</span>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- DASHBOARD PAGE -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-subtitle">Welcome back — Ria Pet Mart</div>
+        </div>
+        <button class="btn btn-primary" onclick="showPage('scan')">+ Scan Invoice</button>
+      </div>
+
+      <div id="setup-banner" class="setup-banner" style="display:none">
+        <h2>⚡ Quick Setup Required</h2>
+        <p>Connect your Google Sheets & Claude API key in Settings to enable full automation. Takes 2 minutes.</p>
+        <button class="btn btn-sm" style="margin-top:12px; background:white; color:var(--teal)" onclick="showPage('settings')">Go to Settings →</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px" class="section">
+        <div class="stat-card">
+          <div class="stat-label">Total Invoices</div>
+          <div class="stat-value" id="stat-invoices">0</div>
+          <div class="stat-note">Scanned this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Products Tracked</div>
+          <div class="stat-value" id="stat-products">0</div>
+          <div class="stat-note">In database</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg Margin</div>
+          <div class="stat-value" id="stat-margin">—</div>
+          <div class="stat-note">Across all channels</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Sheets Synced</div>
+          <div class="stat-value" id="stat-synced">0</div>
+          <div class="stat-note">Records in Google Sheets</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid var(--teal-mid)">
+          <div class="stat-label">💰 Max Profit (100% Sold)</div>
+          <div class="stat-value" id="stat-profit" style="color:var(--teal)">—</div>
+          <div class="stat-note">If all stock sold offline</div>
+        </div>
+      </div>
+
+      <div class="grid-2 section">
+        <div class="card">
+          <div class="card-title">Recent Invoices</div>
+          <div id="recent-invoices-list">
+            <div style="color:var(--text-muted); font-size:13px; padding:20px 0; text-align:center">
+              No invoices yet. Scan your first invoice to get started.
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Active Promotions</div>
+          <div id="dashboard-promos">
+            <div style="color:var(--text-muted); font-size:13px; padding:20px 0; text-align:center">
+              AI will suggest promotions after you scan invoices.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCAN PAGE -->
+    <div id="page-scan" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Scan Invoice</div>
+          <div class="page-subtitle">Capture or upload a supplier invoice — AI will extract the data</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="card section">
+            <div class="card-title">📷 Upload or Capture</div>
+
+            <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+              <div class="upload-icon">📄</div>
+              <div class="upload-title">Drop invoice here or click to browse</div>
+              <div class="upload-hint">Supports JPG, PNG, PDF — or use camera below</div>
+            </div>
+
+            <input type="file" id="file-input" accept="image/*,application/pdf" style="display:none" onchange="handleFileUpload(event)">
+
+            <div style="display:flex; gap:10px; margin-top:12px">
+              <button class="btn btn-secondary" style="flex:1" onclick="startCamera()">📷 Use Camera</button>
+              <button class="btn btn-secondary" id="capture-btn" onclick="capturePhoto()" style="display:none; flex:1">📸 Capture</button>
+            </div>
+
+            <div class="capture-container" style="margin-top:12px">
+              <video id="camera-stream" style="width:100%; border-radius:8px; display:none; max-height:260px; background:#000; object-fit:cover"></video>
+              <canvas id="capture-canvas" style="display:none"></canvas>
+              <img id="preview-image" style="width:100%; border-radius:8px; display:none; max-height:260px; object-fit:contain">
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📋 Manual Entry</div>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px">Or enter invoice details manually</p>
+            <div class="form-group">
+              <label class="form-label">Supplier Name</label>
+              <input class="form-input" id="manual-supplier" placeholder="e.g. Pet Supplies Sdn Bhd">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Invoice Number</label>
+              <input class="form-input" id="manual-inv-no" placeholder="e.g. INV-2024-001">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Invoice Date</label>
+              <input class="form-input" type="date" id="manual-date">
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="addManualProduct()">+ Add Products to Invoice</button>
+          </div>
+        </div>
+
+        <div>
+          <!-- AI EXTRACTION RESULT -->
+          <div class="card section" id="extraction-panel" style="display:none">
+            <div class="card-title">🤖 AI Extracted Data</div>
+            <div id="ai-loading" class="ai-loading" style="display:none">
+              <div class="spinner"></div>
+              AI is reading your invoice...
+            </div>
+            <div id="extracted-content"></div>
+          </div>
+
+          <!-- PRICING SUGGESTION PANEL -->
+          <div class="card" id="pricing-panel" style="display:none">
+            <div class="card-title">💰 AI Pricing Suggestions</div>
+            <div id="pricing-content"></div>
+            <div id="promo-suggestions"></div>
+            <div style="display:flex; gap:10px; margin-top:16px">
+              <button class="btn btn-primary" style="flex:1" onclick="saveToSheets()">💾 Save to Google Sheets</button>
+              <button class="btn btn-secondary" onclick="resetScan()">↩ New Scan</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCTS PAGE -->
+    <div id="page-products" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Products</div>
+          <div class="page-subtitle">All tracked products from scanned invoices</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-primary" onclick="openAddProductModal()">+ Add Product</button>
+          <button class="btn btn-amber btn-sm" onclick="exportProductsExcel()">📥 Excel</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; gap:10px; margin-bottom:16px">
+          <input class="form-input" placeholder="Search products..." id="product-search" oninput="filterProducts()" style="max-width:300px">
+          <select class="form-input" id="category-filter" onchange="filterProducts()" style="max-width:200px">
+            <option value="">All Categories</option>
+            <option>Skin & Coat</option>
+            <option>Gut Health</option>
+            <option>Liver Care</option>
+            <option>Bone & Joint</option>
+            <option>Renal Care</option>
+            <option>Immune Support</option>
+            <option>Calmness</option>
+            <option>Weight Management</option>
+            <option>General Wellness</option>
+          </select>
+        </div>
+        <table id="products-table">
+          <thead>
+            <tr>
+              <th>Product Name</th>
+              <th>SKU</th>
+              <th>Category</th>
+              <th>Cost (RM)</th>
+              <th>Offline Price</th>
+              <th>Online Price</th>
+              <th>Margin</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-tbody">
+            <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px">No products yet. Scan an invoice to add products.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRICING PAGE -->
+    <div id="page-pricing" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Pricing Overview</div>
+          <div class="page-subtitle">Compare pricing across all channels for all products</div>
+        </div>
+      </div>
+
+      <div id="pricing-overview">
+        <div class="alert alert-info" style="margin-bottom:20px">
+          ℹ️ Scan invoices first to see pricing recommendations here.
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMOTIONS PAGE -->
+    <div id="page-promotions" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Promotions & Bundles</div>
+          <div class="page-subtitle">AI-generated promotion ideas based on your product catalog</div>
+        </div>
+        <button class="btn btn-amber" onclick="generateAllPromos()">✨ Generate New Ideas</button>
+      </div>
+      <div id="promos-container">
+        <div class="alert alert-info">Add products first, then use the button above to generate AI promotion ideas.</div>
+      </div>
+    </div>
+
+    <!-- GOOGLE SHEETS PAGE -->
+    <div id="page-sheets" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Google Sheets Sync</div>
+          <div class="page-subtitle">All data synced for LHDN tax submission & record keeping</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-primary" onclick="syncAllToSheets()">🔄 Sync All Now</button>
+          <button class="btn btn-amber" onclick="showExportModal()">📥 Export Excel</button>
+        </div>
+      </div>
+
+      <div class="grid-2 section">
+        <div class="card">
+          <div class="card-title">Connection Status</div>
+          <div id="sheets-status">
+            <div class="alert alert-warning">⚠️ Google Sheets not connected. Add your Sheet ID & API credentials in Settings.</div>
+          </div>
+          <div style="margin-top:16px">
+            <div class="form-group">
+              <label class="form-label">Google Sheet ID</label>
+              <input class="form-input" id="sheet-id-display" placeholder="Paste your Sheet ID here" oninput="saveSheetId()">
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Sync Log</div>
+          <div id="sync-log">
+            <div style="color:var(--text-muted); font-size:13px">No sync history yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📊 LHDN Tax Summary</div>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px">This data is stored in your Google Sheets for easy tax filing. The format follows Malaysian LHDN invoice record requirements.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Invoice No</th>
+              <th>Date</th>
+              <th>Supplier</th>
+              <th>Items</th>
+              <th>Total (RM)</th>
+              <th>SST</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="lhdn-tbody">
+            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px">No invoices synced yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div id="page-settings" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Settings</div>
+          <div class="page-subtitle">Configure API keys and app preferences</div>
+        </div>
+      </div>
+
+      <div class="config-card">
+        <div class="config-title">🤖 Claude AI (Required for Invoice Scanning)</div>
+        <div class="form-group">
+          <label class="form-label">Anthropic API Key</label>
+          <input class="form-input" type="password" id="settings-claude-key" placeholder="sk-ant-api..." oninput="saveSettings()">
+          <div style="font-size:11px; color:var(--text-muted); margin-top:4px">Get your key from console.anthropic.com</div>
+        </div>
+        <div id="claude-status-indicator" style="font-size:12px; color:var(--text-muted)"></div>
+      </div>
+
+      <div class="config-card">
+        <div class="config-title">📊 Google Sheets Integration</div>
+        <div class="alert alert-info" style="margin-bottom:16px">
+          <div>
+            <strong>How to set up:</strong><br>
+            1. Create a new Google Sheet<br>
+            2. Go to Extensions → Apps Script → Deploy as Web App<br>
+            3. Paste the Web App URL below (full CRUD access)<br>
+            4. Copy the Sheet ID from the URL (between /d/ and /edit)
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Google Apps Script Web App URL</label>
+          <input class="form-input" id="settings-apps-script-url" placeholder="https://script.google.com/macros/s/..." oninput="saveSettings()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Google Sheet ID</label>
+          <input class="form-input" id="settings-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" oninput="saveSettings()">
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="testSheetsConnection()">Test Connection</button>
+        <div id="sheets-test-result" style="margin-top:10px; font-size:12px"></div>
+      </div>
+
+      <div class="config-card">
+        <div class="config-title">💼 Business Settings (LHDN)</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Business Name</label>
+            <input class="form-input" id="settings-biz-name" placeholder="Ria Pet Mart" oninput="saveSettings()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">SST Registration No.</label>
+            <input class="form-input" id="settings-sst" placeholder="Optional" oninput="saveSettings()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Offline Margin (%)</label>
+            <input class="form-input" type="number" id="settings-offline-margin" value="40" oninput="saveSettings()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Target Online Margin (%)</label>
+            <input class="form-input" type="number" id="settings-online-margin" value="30" oninput="saveSettings()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shopee/Lazada Platform Fee (%)</label>
+            <input class="form-input" type="number" id="settings-platform-fee" value="8" oninput="saveSettings()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">TikTok Shop Commission (%)</label>
+            <input class="form-input" type="number" id="settings-tiktok-fee" value="5" oninput="saveSettings()">
+          </div>
+        </div>
+      </div>
+
+      <div class="config-card">
+        <div class="config-title">🔐 Login Credentials</div>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px">Change your username and password for this dashboard.</p>
+        <button class="btn btn-secondary btn-sm" onclick="openModal('credentials-modal')">🔐 Change Username & Password</button>
+        <button class="btn btn-secondary btn-sm" style="margin-left:8px" onclick="logout()">🚪 Logout</button>
+      </div>
+      <div class="config-card">
+        <div class="config-title">⚠️ Danger Zone</div>
+        <button class="btn btn-coral btn-sm" onclick="clearAllData()">🗑️ Clear All Local Data</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ADD PRODUCT MODAL -->
+<div class="modal-overlay" id="add-product-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Product</div>
+      <button class="modal-close" onclick="closeModal('add-product-modal')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Product Name *</label>
+      <input class="form-input" id="modal-product-name" placeholder="e.g. Ria Pet Flea Collar">
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">SKU</label>
+        <input class="form-input" id="modal-product-sku" placeholder="SKU-001">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-input" id="modal-product-category">
+          <option>Skin & Coat</option>
+          <option>Gut Health</option>
+          <option>Liver Care</option>
+          <option>Bone & Joint</option>
+          <option>Renal Care</option>
+          <option>Immune Support</option>
+          <option>Calmness</option>
+          <option>Weight Management</option>
+          <option>General Wellness</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Cost Price (RM) *</label>
+        <input class="form-input" type="number" id="modal-product-cost" placeholder="0.00" oninput="calcModalPrices()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Qty in Invoice</label>
+        <input class="form-input" type="number" id="modal-product-qty" placeholder="1" value="1">
+      </div>
+    </div>
+    <div id="modal-pricing-preview" style="display:none; margin: 14px 0;">
+      <div class="grid-4" style="gap:8px">
+        <div class="pricing-platform" style="grid-column: span 1">
+          <div class="platform-name">Offline</div>
+          <div class="platform-price" id="mp-offline">—</div>
+          <div class="platform-margin" id="mp-offline-m"></div>
+        </div>
+        <div class="pricing-platform">
+          <div class="platform-name">Shopee</div>
+          <div class="platform-price" id="mp-shopee">—</div>
+          <div class="platform-margin" id="mp-shopee-m"></div>
+        </div>
+        <div class="pricing-platform">
+          <div class="platform-name">Lazada</div>
+          <div class="platform-price" id="mp-lazada">—</div>
+          <div class="platform-margin" id="mp-lazada-m"></div>
+        </div>
+        <div class="pricing-platform">
+          <div class="platform-name">TikTok</div>
+          <div class="platform-price" id="mp-tiktok">—</div>
+          <div class="platform-margin" id="mp-tiktok-m"></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Supplier</label>
+      <input class="form-input" id="modal-product-supplier" placeholder="Supplier name">
+    </div>
+    <div style="display:flex; gap:10px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveProductFromModal()">Save Product</button>
+      <button class="btn btn-secondary" onclick="closeModal('add-product-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notification" id="notification"></div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  products: [],
+  invoices: [],
+  syncLog: [],
+  currentInvoiceData: null,
+  cameraStream: null,
+  capturedImageBase64: null,
+};
+
+
+// ============================================================
+// AUTH — Login & Session
+// ============================================================
+const DEFAULT_USER = 'admin';
+const DEFAULT_PASS = 'riaadmin2024';
+
+function getCredentials() {
+  return {
+    username: localStorage.getItem('rpm_username') || DEFAULT_USER,
+    password: localStorage.getItem('rpm_password') || DEFAULT_PASS,
+  };
+}
+
+function isLoggedIn() {
+  return sessionStorage.getItem('rpm_session') === 'active';
+}
+
+function attemptLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const creds = getCredentials();
+  const errEl = document.getElementById('login-error');
+
+  if (!user || !pass) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Please enter username and password.';
+    return;
+  }
+
+  if (user === creds.username && pass === creds.password) {
+    sessionStorage.setItem('rpm_session', 'active');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'flex';
+    init();
+  } else {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Wrong username or password. Try again.';
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-pass').focus();
+  }
+}
+
+function logout() {
+  if (!confirm('Logout from Ria Pet Mart dashboard?')) return;
+  sessionStorage.removeItem('rpm_session');
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+
+function saveCredentials() {
+  const newUser = document.getElementById('new-username').value.trim();
+  const newPass = document.getElementById('new-password').value;
+  const confirmPass = document.getElementById('confirm-password').value;
+
+  if (!newUser || newUser.length < 3) { showNotification('Username must be at least 3 characters.'); return; }
+  if (!newPass || newPass.length < 6) { showNotification('Password must be at least 6 characters.'); return; }
+  if (newPass !== confirmPass) { showNotification('Passwords do not match!'); return; }
+
+  localStorage.setItem('rpm_username', newUser);
+  localStorage.setItem('rpm_password', newPass);
+  closeModal('credentials-modal');
+  document.getElementById('new-username').value = '';
+  document.getElementById('new-password').value = '';
+  document.getElementById('confirm-password').value = '';
+  showNotification('✅ Credentials updated! Use new login next time.');
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+// ============================================================
+// EXCEL EXPORT
+// ============================================================
+function showExportModal() {
+  openModal('export-modal');
+}
+
+function exportProductsExcel() {
+  exportExcel('products');
+}
+
+function exportExcel(type) {
+  if (typeof XLSX === 'undefined') {
+    showNotification('Excel library not loaded. Please check your internet connection.');
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const bizName = getSettings().bizName || 'Ria Pet Mart';
+  const dateStr = new Date().toLocaleDateString('en-MY').replace(/\//g, '-');
+
+  if (type === 'all' || type === 'invoices') {
+    const invoiceRows = [
+      ['Ria Pet Mart — Invoice Records', '', '', '', '', '', ''],
+      ['Exported:', new Date().toLocaleString('en-MY'), '', '', '', '', ''],
+      [''],
+      ['Timestamp', 'Invoice No', 'Invoice Date', 'Supplier', 'Total (RM)', 'Items', 'Synced'],
+    ];
+    state.invoices.forEach(inv => {
+      invoiceRows.push([
+        inv.savedAt ? new Date(inv.savedAt).toLocaleString('en-MY') : '',
+        inv.invoice_number || '',
+        inv.invoice_date || '',
+        inv.supplier_name || '',
+        parseFloat(inv.total_amount || 0).toFixed(2),
+        (inv.items || []).length,
+        inv.synced ? 'Yes' : 'Local only',
+      ]);
+    });
+    // Add totals row
+    invoiceRows.push(['']);
+    const grandTotal = state.invoices.reduce((s, i) => s + parseFloat(i.total_amount || 0), 0);
+    invoiceRows.push(['', '', '', 'GRAND TOTAL', grandTotal.toFixed(2), '', '']);
+
+    const ws = XLSX.utils.aoa_to_sheet(invoiceRows);
+    ws['!cols'] = [{wch:22},{wch:16},{wch:14},{wch:28},{wch:12},{wch:8},{wch:12}];
+    // Style header rows
+    styleExcelHeader(ws, 'A1', 'G1');
+    XLSX.utils.book_append_sheet(wb, ws, 'Invoices');
+  }
+
+  if (type === 'all' || type === 'products') {
+    // ── Products sheet ──
+    const prodRows = [
+      ['Ria Pet Mart — Product Catalog', '', '', '', '', '', '', '', '', ''],
+      ['Exported:', new Date().toLocaleString('en-MY'), '', '', '', '', '', '', '', ''],
+      [''],
+      ['Product Name', 'SKU', 'Category', 'Supplier', 'Cost (RM)', 'Offline (RM)', 'Shopee (RM)', 'Lazada (RM)', 'TikTok (RM)', 'Offline Margin %'],
+    ];
+    state.products.forEach(p => {
+      const cost    = parseFloat(p.cost || 0);
+      const offline = parseFloat(p.prices?.offline || 0);
+      const margin  = offline > 0 ? ((offline - cost) / offline * 100).toFixed(1) + '%' : '—';
+      prodRows.push([
+        p.name || '', p.sku || '', p.category || '', p.supplier || '',
+        cost.toFixed(2),
+        offline.toFixed(2),
+        parseFloat(p.prices?.shopee  || 0).toFixed(2),
+        parseFloat(p.prices?.lazada  || 0).toFixed(2),
+        parseFloat(p.prices?.tiktok  || 0).toFixed(2),
+        margin,
+      ]);
+    });
+    const ws2 = XLSX.utils.aoa_to_sheet(prodRows);
+    ws2['!cols'] = [{wch:32},{wch:12},{wch:18},{wch:22},{wch:12},{wch:13},{wch:13},{wch:13},{wch:13},{wch:15}];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Products');
+
+    // ── Pricing tab — clean channel comparison ──
+    const pricingRows = [
+      ['Ria Pet Mart — Pricing by Channel', '', '', '', '', '', '', '', '', '', '', ''],
+      ['Exported:', new Date().toLocaleString('en-MY'), '','','','','','','','','',''],
+      ['Note: Prices calculated to hit margin targets set in Settings','','','','','','','','','','',''],
+      [''],
+      [
+        'Product Name', 'Category', 'Cost (RM)',
+        'Offline Price', 'Offline Margin',
+        'Shopee Price', 'Shopee Margin',
+        'Lazada Price', 'Lazada Margin',
+        'TikTok Price', 'TikTok Margin',
+        'Best Channel'
+      ],
+    ];
+    state.products.forEach(p => {
+      const cost    = parseFloat(p.cost || 0);
+      const pr      = p.prices || {};
+      const mOff = cost > 0 && pr.offline ? ((pr.offline - cost)/pr.offline*100).toFixed(1)+'%' : '—';
+      const mShp = cost > 0 && pr.shopee  ? ((pr.shopee  - cost)/pr.shopee *100).toFixed(1)+'%' : '—';
+      const mLaz = cost > 0 && pr.lazada  ? ((pr.lazada  - cost)/pr.lazada *100).toFixed(1)+'%' : '—';
+      const mTT  = cost > 0 && pr.tiktok  ? ((pr.tiktok  - cost)/pr.tiktok *100).toFixed(1)+'%' : '—';
+      // Best channel = highest revenue (already baked-in margin)
+      const channels = [
+        {n:'Offline', rev: (pr.offline||0)}, {n:'Shopee', rev: (pr.shopee||0)},
+        {n:'Lazada',  rev: (pr.lazada||0)},  {n:'TikTok', rev: (pr.tiktok||0)},
+      ];
+      const best = channels.reduce((a,b) => b.rev > a.rev ? b : a).n;
+      pricingRows.push([
+        p.name || '', p.category || '', cost > 0 ? cost.toFixed(2) : '—',
+        pr.offline ? 'RM '+pr.offline.toFixed(2) : '—', mOff,
+        pr.shopee  ? 'RM '+pr.shopee.toFixed(2)  : '—', mShp,
+        pr.lazada  ? 'RM '+pr.lazada.toFixed(2)  : '—', mLaz,
+        pr.tiktok  ? 'RM '+pr.tiktok.toFixed(2)  : '—', mTT,
+        best,
+      ]);
+    });
+    // Summary row
+    pricingRows.push(['']);
+    const avgOffMargin = state.products.length > 0
+      ? (state.products.reduce((s,p) => {
+          const c = p.cost||0, o = p.prices?.offline||0;
+          return s + (o > 0 ? (o-c)/o*100 : 0);
+        }, 0) / state.products.length).toFixed(1) + '%'
+      : '—';
+    pricingRows.push(['Average Offline Margin:', avgOffMargin, '', '', '', '', '', '', '', '', '', '']);
+
+    const ws3 = XLSX.utils.aoa_to_sheet(pricingRows);
+    ws3['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:14},{wch:15},{wch:14},{wch:15},{wch:14},{wch:15},{wch:14},{wch:15},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, ws3, 'Pricing by Channel');
+  }
+
+  if (type === 'all' || type === 'tax') {
+    const s = getSettings();
+    const taxRows = [
+      ['Ria Pet Mart — LHDN Tax Summary', '', '', '', '', '', '', ''],
+      ['Business:', bizName, '', 'SST No:', s.sst || 'N/A', '', '', ''],
+      ['Financial Year:', new Date().getFullYear(), '', 'Exported:', new Date().toLocaleString('en-MY'), '', '', ''],
+      [''],
+      ['Record Date', 'Invoice No', 'Invoice Date', 'Supplier', 'Amount (RM)', 'SST 6% (RM)', 'Total incl SST', 'Month', 'Status'],
+    ];
+
+    let yearTotal = 0;
+    let yearSST = 0;
+    state.invoices.forEach(inv => {
+      const amt = parseFloat(inv.total_amount || 0);
+      const sst = amt * 0.06;
+      yearTotal += amt;
+      yearSST += sst;
+      let month = '—';
+      try { if (inv.invoice_date) month = new Date(inv.invoice_date).toLocaleString('en-MY', { month: 'long', year: 'numeric' }); } catch {}
+      taxRows.push([
+        inv.savedAt ? new Date(inv.savedAt).toLocaleDateString('en-MY') : '',
+        inv.invoice_number || '',
+        inv.invoice_date || '',
+        inv.supplier_name || '',
+        amt.toFixed(2),
+        sst.toFixed(2),
+        (amt + sst).toFixed(2),
+        month,
+        'Active',
+      ]);
+    });
+    taxRows.push(['']);
+    taxRows.push(['', '', '', 'YEAR TOTAL', yearTotal.toFixed(2), yearSST.toFixed(2), (yearTotal + yearSST).toFixed(2), '', '']);
+    taxRows.push(['']);
+    taxRows.push(['Note: This document is for record-keeping. Please verify with your accountant for LHDN submission.']);
+
+    const ws3 = XLSX.utils.aoa_to_sheet(taxRows);
+    ws3['!cols'] = [{wch:20},{wch:16},{wch:14},{wch:28},{wch:14},{wch:13},{wch:16},{wch:18},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, ws3, 'LHDN Tax Summary');
+  }
+
+  // Generate filename
+  // ── Profit Projection sheet (for full export) ──
+  if (type === 'all') {
+    const projRows = [
+      ['Ria Pet Mart — Profit Projection (100% Sold)', '', '', '', '', ''],
+      ['Exported:', new Date().toLocaleString('en-MY'), '', '', '', ''],
+      ['Assumption: All stock sold at recommended prices', '', '', '', '', ''],
+      [''],
+      ['Invoice No', 'Supplier', 'Date', 'Stock Cost (RM)', 'Offline Profit (RM)', 'Shopee Profit (RM)', 'Lazada Profit (RM)', 'TikTok Profit (RM)', 'Best Channel'],
+    ];
+    let totCost=0, totOff=0, totShp=0, totLaz=0, totTT=0;
+    state.invoices.forEach(inv => {
+      const proj = calcProjection(inv);
+      totCost += proj.totalCost;
+      totOff  += proj.offline.profit;
+      totShp  += proj.shopee.profit;
+      totLaz  += proj.lazada.profit;
+      totTT   += proj.tiktok.profit;
+      const bests = [{n:'Offline',p:proj.offline.profit},{n:'Shopee',p:proj.shopee.profit},{n:'Lazada',p:proj.lazada.profit},{n:'TikTok',p:proj.tiktok.profit}];
+      const best  = bests.reduce((a,b)=>b.p>a.p?b:a).n;
+      projRows.push([
+        inv.invoice_number||'', inv.supplier_name||'', inv.invoice_date||'',
+        proj.totalCost.toFixed(2),
+        proj.offline.profit.toFixed(2), proj.shopee.profit.toFixed(2),
+        proj.lazada.profit.toFixed(2),  proj.tiktok.profit.toFixed(2),
+        best,
+      ]);
+    });
+    projRows.push(['']);
+    projRows.push(['TOTAL', '', '', totCost.toFixed(2), totOff.toFixed(2), totShp.toFixed(2), totLaz.toFixed(2), totTT.toFixed(2), '']);
+    const wsProj = XLSX.utils.aoa_to_sheet(projRows);
+    wsProj['!cols'] = [{wch:16},{wch:24},{wch:14},{wch:16},{wch:18},{wch:18},{wch:18},{wch:18},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, wsProj, 'Profit Projection');
+  }
+
+  const fileNames = {
+    all: `RiaPetMart_YearEnd_Report_${dateStr}.xlsx`,
+    invoices: `RiaPetMart_Invoices_${dateStr}.xlsx`,
+    products: `RiaPetMart_Products_${dateStr}.xlsx`,
+    tax: `RiaPetMart_LHDN_Tax_${dateStr}.xlsx`,
+  };
+
+  XLSX.writeFile(wb, fileNames[type] || `RiaPetMart_Export_${dateStr}.xlsx`);
+  closeModal('export-modal');
+  showNotification('✅ Excel file downloaded!');
+}
+
+function styleExcelHeader(ws, start, end) {
+  // Basic column width styling - SheetJS lite styling
+  return ws;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  loadFromStorage();
+  loadSettings();
+  updateStats();
+  renderProductsTable();
+  renderPricingOverview();
+  renderDashboard();
+  
+  const claudeKey = getSettings().claudeKey;
+  if (!claudeKey) {
+    document.getElementById('setup-banner').style.display = 'block';
+  }
+  
+  // Drag-drop on upload zone
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  });
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.toLowerCase().includes(page.substring(0, 5).toLowerCase())) {
+      n.classList.add('active');
+    }
+  });
+  if (page === 'products') renderProductsTable();
+  if (page === 'pricing') renderPricingOverview();
+  if (page === 'sheets') renderSheetsPage();
+  if (page === 'promotions') renderPromos();
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function getSettings() {
+  const s = JSON.parse(localStorage.getItem('aniamor_settings') || '{}');
+  return {
+    claudeKey: s.claudeKey || '',
+    appsScriptUrl: s.appsScriptUrl || '',
+    sheetId: s.sheetId || '',
+    bizName: s.bizName || 'Ria Pet Mart',
+    sst: s.sst || '',
+    offlineMargin: parseFloat(s.offlineMargin) || 40,
+    onlineMargin: parseFloat(s.onlineMargin) || 30,
+    platformFee: parseFloat(s.platformFee) || 8,
+    tiktokFee: parseFloat(s.tiktokFee) || 5,
+  };
+}
+
+function saveSettings() {
+  const s = {
+    claudeKey: document.getElementById('settings-claude-key').value,
+    appsScriptUrl: document.getElementById('settings-apps-script-url').value,
+    sheetId: document.getElementById('settings-sheet-id').value,
+    bizName: document.getElementById('settings-biz-name').value,
+    sst: document.getElementById('settings-sst').value,
+    offlineMargin: document.getElementById('settings-offline-margin').value,
+    onlineMargin: document.getElementById('settings-online-margin').value,
+    platformFee: document.getElementById('settings-platform-fee').value,
+    tiktokFee: document.getElementById('settings-tiktok-fee').value,
+  };
+  localStorage.setItem('aniamor_settings', JSON.stringify(s));
+  
+  const sheetIdEl = document.getElementById('sheet-id-display');
+  if (sheetIdEl) sheetIdEl.value = s.sheetId;
+  
+  if (s.claudeKey) {
+    document.getElementById('setup-banner').style.display = 'none';
+  }
+}
+
+function loadSettings() {
+  const s = getSettings();
+  document.getElementById('settings-claude-key').value = s.claudeKey;
+  document.getElementById('settings-apps-script-url').value = s.appsScriptUrl;
+  document.getElementById('settings-sheet-id').value = s.sheetId;
+  document.getElementById('settings-biz-name').value = s.bizName;
+  document.getElementById('settings-sst').value = s.sst;
+  document.getElementById('settings-offline-margin').value = s.offlineMargin;
+  document.getElementById('settings-online-margin').value = s.onlineMargin;
+  document.getElementById('settings-platform-fee').value = s.platformFee;
+  document.getElementById('settings-tiktok-fee').value = s.tiktokFee;
+  
+  const sheetIdEl = document.getElementById('sheet-id-display');
+  if (sheetIdEl) sheetIdEl.value = s.sheetId;
+}
+
+// ============================================================
+// LOCAL STORAGE
+// ============================================================
+function loadFromStorage() {
+  state.products = JSON.parse(localStorage.getItem('aniamor_products') || '[]');
+  state.invoices = JSON.parse(localStorage.getItem('aniamor_invoices') || '[]');
+  state.syncLog = JSON.parse(localStorage.getItem('aniamor_synclog') || '[]');
+}
+
+function saveToStorage() {
+  localStorage.setItem('aniamor_products', JSON.stringify(state.products));
+  localStorage.setItem('aniamor_invoices', JSON.stringify(state.invoices));
+  localStorage.setItem('aniamor_synclog', JSON.stringify(state.syncLog));
+}
+
+// ============================================================
+// CAMERA
+// ============================================================
+async function startCamera() {
+  const video = document.getElementById('camera-stream');
+  const captureBtn = document.getElementById('capture-btn');
+  try {
+    state.cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = state.cameraStream;
+    video.play();
+    video.style.display = 'block';
+    captureBtn.style.display = 'inline-flex';
+    document.getElementById('preview-image').style.display = 'none';
+  } catch (err) {
+    const msg = err.name === 'NotAllowedError' 
+      ? 'Camera permission denied. Please allow camera access in your browser settings.'
+      : err.name === 'NotFoundError'
+      ? 'No camera found on this device. Please use file upload instead.'
+      : 'Camera not available: ' + err.message;
+    showNotification(msg);
+    document.getElementById('extraction-panel').style.display = 'block';
+    document.getElementById('extracted-content').innerHTML =
+      '<div class="alert alert-warning">⚠️ ' + msg + '<br><br>Use the file upload option above instead.</div>';
+  }
+}
+
+function capturePhoto() {
+  const video = document.getElementById('camera-stream');
+  const canvas = document.getElementById('capture-canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+  state.capturedImageBase64 = dataUrl.split(',')[1];
+  
+  document.getElementById('preview-image').src = dataUrl;
+  document.getElementById('preview-image').style.display = 'block';
+  video.style.display = 'none';
+  
+  if (state.cameraStream) {
+    state.cameraStream.getTracks().forEach(t => t.stop());
+    state.cameraStream = null;
+  }
+  
+  processImageWithAI(state.capturedImageBase64, 'image/jpeg');
+}
+
+// ============================================================
+// FILE UPLOAD
+// ============================================================
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (file) processFile(file);
+}
+
+function processFile(file) {
+  if (file.size > 10 * 1024 * 1024) {
+    showNotification('File is very large — compressing before sending...');
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const mediaType = file.type;
+    if (file.type.startsWith('image/')) {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1600;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        const compressed = cv.toDataURL('image/jpeg', 0.85);
+        document.getElementById('preview-image').src = compressed;
+        document.getElementById('preview-image').style.display = 'block';
+        processImageWithAI(compressed.split(',')[1], 'image/jpeg');
+      };
+      img.onerror = () => processImageWithAI(e.target.result.split(',')[1], mediaType);
+      img.src = e.target.result;
+    } else {
+      processImageWithAI(e.target.result.split(',')[1], mediaType);
+    }
+  };
+  reader.onerror = () => showNotification('Could not read file. Please try again.');
+  reader.readAsDataURL(file);
+}
+
+// ============================================================
+// AI INVOICE PROCESSING
+// ============================================================
+async function processImageWithAI(base64Data, mediaType) {
+  const settings = getSettings();
+  
+  document.getElementById('extraction-panel').style.display = 'block';
+  document.getElementById('ai-loading').style.display = 'flex';
+  document.getElementById('extracted-content').innerHTML = '';
+  document.getElementById('pricing-panel').style.display = 'none';
+  
+  if (!settings.claudeKey) {
+    document.getElementById('ai-loading').style.display = 'none';
+    document.getElementById('extracted-content').innerHTML = `
+      <div class="alert alert-warning">
+        ⚠️ Claude API key not set. Please go to Settings and add your API key, then try again.
+        <br><br><button class="btn btn-sm btn-primary" onclick="showPage('settings')">Go to Settings</button>
+      </div>`;
+    return;
+  }
+
+  const prompt = `You are an invoice data extractor for a Malaysian pet store called Ria Pet Mart.
+
+Extract ALL data from this invoice and return ONLY valid JSON. No markdown, no explanation, just JSON.
+
+IMPORTANT RULES FOR COST CALCULATION:
+- unit_price = the ORIGINAL price per unit BEFORE any item-level discount
+- discount_per_unit = discount amount per unit (0 if none)
+- net_unit_price = unit_price MINUS discount_per_unit (this is the actual cost per unit paid)
+- Look for discounts written as: %, RM off, rebate, potongan, diskaun, trade discount
+- invoice_discount = any overall invoice-level discount (cash discount, early payment discount)
+- shipping_charge = delivery/freight/shipping fee (0 if none)
+- other_charges = any other charges like handling, packaging (0 if none)
+- sst_amount = SST/GST tax amount on the invoice (0 if none)
+- total_amount = the final amount actually payable
+
+Return this exact JSON structure:
+{
+  "invoice_number": "string",
+  "invoice_date": "YYYY-MM-DD",
+  "supplier_name": "string",
+  "supplier_address": "string",
+  "subtotal": number,
+  "invoice_discount": number,
+  "shipping_charge": number,
+  "other_charges": number,
+  "sst_amount": number,
+  "total_amount": number,
+  "currency": "MYR",
+  "items": [
+    {
+      "product_name": "string",
+      "sku": "string",
+      "quantity": number,
+      "unit_price": number,
+      "discount_per_unit": number,
+      "net_unit_price": number,
+      "total_price": number,
+      "description": "string"
+    }
+  ]
+}
+
+If any field is not on the invoice, use 0. Extract ALL line items. Be precise with every number.`;
+
+  try {
+    const isPDF = mediaType === 'application/pdf';
+    const contentBlock = isPDF
+      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64Data } }
+      : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } };
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': settings.claudeKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1500,
+        messages: [{
+          role: 'user',
+          content: [
+            contentBlock,
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      let errMsg = 'HTTP ' + response.status;
+      try { const errBody = await response.json(); errMsg = errBody.error?.message || errMsg; } catch {}
+      if (response.status === 401) errMsg = 'Invalid API key — please check Settings.';
+      if (response.status === 400) errMsg = 'Image too large or unsupported format. Use JPG/PNG under 5MB.';
+      if (response.status === 429) errMsg = 'Too many requests — wait a moment and try again.';
+      throw new Error(errMsg);
+    }
+
+    const data = await response.json();
+    const rawText = data.content.map(c => c.text || '').join('');
+
+    let invoiceData;
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    try {
+      invoiceData = JSON.parse(clean);
+    } catch {
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try { invoiceData = JSON.parse(jsonMatch[0]); }
+        catch { throw new Error('AI could not read invoice. Try a clearer, well-lit photo.'); }
+      } else {
+        throw new Error('AI could not read invoice. Try a clearer, well-lit photo.');
+      }
+    }
+
+    state.currentInvoiceData = invoiceData;
+    document.getElementById('ai-loading').style.display = 'none';
+    renderExtractedInvoice(invoiceData);
+    renderPricingSuggestions(invoiceData);
+
+  } catch (err) {
+    document.getElementById('ai-loading').style.display = 'none';
+    document.getElementById('extracted-content').innerHTML =
+      '<div class="alert" style="background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1">' +
+      '<strong>❌ Error:</strong> ' + err.message +
+      '<br><br><strong>Common fixes:</strong><br>' +
+      '• Check your API key is correct in Settings<br>' +
+      '• Image should be clear, well-lit, under 5MB<br>' +
+      '• Try JPG or PNG instead of PDF<br>' +
+      '• Make sure you are connected to internet' +
+      '</div>';
+  }
+}
+
+function renderExtractedInvoice(data) {
+  const el = document.getElementById('extracted-content');
+
+  // Calculate landed cost per unit = net_unit_price + share of invoice-level charges
+  const items = data.items || [];
+  const totalQty = items.reduce((s,i) => s + (parseInt(i.quantity)||1), 0);
+  const extraCharges = (data.shipping_charge||0) + (data.other_charges||0);
+  // Spread invoice discount as a reduction, spread extra charges as additions
+  const invoiceDiscountPerUnit = totalQty > 0 ? (data.invoice_discount||0) / totalQty : 0;
+  const extraChargesPerUnit    = totalQty > 0 ? extraCharges / totalQty : 0;
+
+  const itemsHtml = items.map(item => {
+    const qty         = parseInt(item.quantity) || 1;
+    const unitPrice   = parseFloat(item.unit_price) || 0;
+    const discPerUnit = parseFloat(item.discount_per_unit) || 0;
+    const netUnit     = parseFloat(item.net_unit_price) || (unitPrice - discPerUnit);
+    // Landed cost = net unit price - share of invoice discount + share of extra charges
+    const landedCost  = Math.max(0, netUnit - invoiceDiscountPerUnit + extraChargesPerUnit);
+
+    const hasDiscount = discPerUnit > 0 || invoiceDiscountPerUnit > 0;
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:500">${item.product_name || '—'}</div>
+          ${item.sku ? '<div style="font-size:10px;color:var(--text-muted)">'+item.sku+'</div>' : ''}
+        </td>
+        <td style="text-align:center">${qty}</td>
+        <td>RM ${unitPrice.toFixed(2)}</td>
+        <td style="color:var(--coral)">
+          ${discPerUnit > 0 ? '−RM '+discPerUnit.toFixed(2) : '—'}
+        </td>
+        <td style="color:var(--teal);font-weight:600">RM ${landedCost.toFixed(2)}</td>
+        <td>RM ${(landedCost * qty).toFixed(2)}</td>
+      </tr>`;
+  }).join('');
+
+  const hasAnyDiscount = (data.invoice_discount||0) > 0 || items.some(i => (i.discount_per_unit||0) > 0);
+  const hasCharges = extraCharges > 0;
+
+  el.innerHTML = `
+    <div class="alert alert-success" style="margin-bottom:12px">✅ Invoice extracted! Review the landed costs below before saving.</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:13px">
+      <div><span style="color:var(--text-muted)">Invoice No: </span><strong>${data.invoice_number||'—'}</strong></div>
+      <div><span style="color:var(--text-muted)">Date: </span>${data.invoice_date||'—'}</div>
+      <div><span style="color:var(--text-muted)">Supplier: </span>${data.supplier_name||'—'}</div>
+      <div><span style="color:var(--text-muted)">Total Paid: </span><strong>RM ${(data.total_amount||0).toFixed(2)}</strong></div>
+    </div>
+
+    ${hasAnyDiscount || hasCharges ? `
+    <div style="background:var(--amber-light);border:1px solid rgba(186,117,23,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px">
+      <div style="font-weight:600;color:var(--amber);margin-bottom:6px">📋 Invoice Adjustments Detected</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        ${(data.invoice_discount||0) > 0 ? '<span>🔽 Invoice Discount: <strong>RM '+(data.invoice_discount).toFixed(2)+'</strong></span>' : ''}
+        ${(data.shipping_charge||0)   > 0 ? '<span>🚚 Shipping: <strong>RM '+(data.shipping_charge).toFixed(2)+'</strong></span>' : ''}
+        ${(data.other_charges||0)     > 0 ? '<span>➕ Other Charges: <strong>RM '+(data.other_charges).toFixed(2)+'</strong></span>' : ''}
+        ${(data.sst_amount||0)        > 0 ? '<span>🏛️ SST: <strong>RM '+(data.sst_amount).toFixed(2)+'</strong></span>' : ''}
+      </div>
+      <div style="margin-top:6px;color:var(--text-muted)">These are spread proportionally across all items to calculate the true landed cost per unit.</div>
+    </div>` : ''}
+
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-bottom:6px">Line Items</div>
+    <div style="overflow-x:auto">
+      <table style="min-width:500px">
+        <thead>
+          <tr>
+            <th>Product</th><th>Qty</th><th>List Price</th>
+            <th style="color:var(--coral)">Discount</th>
+            <th style="color:var(--teal)">Landed Cost ✓</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>${itemsHtml}</tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--text-muted);background:var(--teal-light);padding:8px 12px;border-radius:6px">
+      ✅ <strong>Landed Cost</strong> = List Price − Item Discount − Share of Invoice Discount + Share of Shipping & Other Charges.<br>
+      This is the true cost price used for all margin and pricing calculations.
+    </div>
+    <div style="margin-top:10px">
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:6px">✏️ Adjust any landed cost if needed before saving:</div>
+      ${items.map((item,idx) => {
+        const qty = parseInt(item.quantity)||1;
+        const netUnit = parseFloat(item.net_unit_price)||(parseFloat(item.unit_price||0)-parseFloat(item.discount_per_unit||0));
+        const landed = Math.max(0, netUnit - invoiceDiscountPerUnit + extraChargesPerUnit);
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px">
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item.product_name||''}">${(item.product_name||'Item '+(idx+1)).substring(0,30)}</span>
+          <span style="color:var(--text-muted)">Landed cost/unit:</span>
+          <span style="color:var(--text-muted)">RM</span>
+          <input type="number" step="0.01" value="${landed.toFixed(2)}"
+            id="landed-cost-${idx}"
+            style="width:80px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:'DM Mono',monospace"
+            oninput="updateLandedCost(${idx}, this.value)">
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+
+  // Store landed costs on the invoice data items for pricing calc
+  items.forEach((item, idx) => {
+    const qty = parseInt(item.quantity)||1;
+    const netUnit = parseFloat(item.net_unit_price)||(parseFloat(item.unit_price||0)-parseFloat(item.discount_per_unit||0));
+    item._landedCost = Math.max(0, netUnit - invoiceDiscountPerUnit + extraChargesPerUnit);
+  });
+}
+
+function updateLandedCost(idx, val) {
+  const data = state.currentInvoiceData;
+  if (!data || !data.items[idx]) return;
+  data.items[idx]._landedCost = parseFloat(val) || 0;
+  // Re-render pricing suggestions with updated cost
+  renderPricingSuggestions(data);
+}
+
+// ============================================================
+// PRICING CALCULATIONS
+// ============================================================
+function calcPrices(costPrice) {
+  const s = getSettings();
+  const offlineMargin = s.offlineMargin / 100;
+  const onlineMargin = s.onlineMargin / 100;
+  const platformFee = s.platformFee / 100;
+  const tiktokFee = s.tiktokFee / 100;
+  
+  const offlinePrice = costPrice / (1 - offlineMargin);
+  const shopeeBase = costPrice / (1 - onlineMargin);
+  const shopeePrice = shopeeBase / (1 - platformFee);
+  const lazadaPrice = shopeeBase / (1 - platformFee);
+  const tiktokPrice = shopeeBase / (1 - tiktokFee);
+  
+  // Round to RM0.90 endings for Malaysian market appeal
+  const roundPrice = (p) => Math.ceil(p / 0.9) * 0.9 - 0.10;
+  
+  return {
+    offline: roundPrice(offlinePrice),
+    shopee: roundPrice(shopeePrice),
+    lazada: roundPrice(lazadaPrice),
+    tiktok: roundPrice(tiktokPrice),
+  };
+}
+
+function calcMargin(cost, price) {
+  return ((price - cost) / price * 100).toFixed(1);
+}
+
+function renderPricingSuggestions(invoiceData) {
+  if (!invoiceData.items || invoiceData.items.length === 0) return;
+  
+  const s = getSettings();
+  const panel = document.getElementById('pricing-panel');
+  const content = document.getElementById('pricing-content');
+  
+  const itemsHtml = invoiceData.items.map((item, i) => {
+    // Use landed cost if available, otherwise fall back to net_unit_price or unit_price
+    const cost = item._landedCost || item.net_unit_price || item.unit_price || 0;
+    if (cost === 0) return '';
+    const prices = calcPrices(cost);
+    
+    return `
+      <div style="border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; margin-bottom:12px">
+        <div style="font-weight:600; margin-bottom:10px; font-size:13px">${item.product_name}</div>
+        <div class="grid-4" style="gap:8px">
+          <div class="pricing-platform">
+            <div class="platform-name">🏪 Offline</div>
+            <div class="platform-price">RM ${prices.offline.toFixed(2)}</div>
+            <div class="platform-margin">${calcMargin(cost, prices.offline)}% margin</div>
+          </div>
+          <div class="pricing-platform">
+            <div class="platform-name">🛒 Shopee</div>
+            <div class="platform-price">RM ${prices.shopee.toFixed(2)}</div>
+            <div class="platform-margin">${calcMargin(cost, prices.shopee)}% margin</div>
+          </div>
+          <div class="pricing-platform">
+            <div class="platform-name">📦 Lazada</div>
+            <div class="platform-price">RM ${prices.lazada.toFixed(2)}</div>
+            <div class="platform-margin">${calcMargin(cost, prices.lazada)}% margin</div>
+          </div>
+          <div class="pricing-platform">
+            <div class="platform-name">🎵 TikTok</div>
+            <div class="platform-price">RM ${prices.tiktok.toFixed(2)}</div>
+            <div class="platform-margin">${calcMargin(cost, prices.tiktok)}% margin</div>
+          </div>
+        </div>
+        <div style="margin-top:8px; font-size:11px; color:var(--text-muted)">
+          Cost: RM ${cost.toFixed(2)} · Targets: ${s.offlineMargin}% offline, ${s.onlineMargin}% online
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // Bundle/promo suggestions
+  const bundleHtml = generateBundleSuggestions(invoiceData.items);
+  
+  content.innerHTML = itemsHtml;
+  document.getElementById('promo-suggestions').innerHTML = `
+    <div style="font-weight:600; margin:16px 0 10px; font-family:'Syne',sans-serif">🎁 AI Bundle & Promo Ideas</div>
+    ${bundleHtml}
+  `;
+  
+  panel.style.display = 'block';
+}
+
+function generateBundleSuggestions(items) {
+  if (!items || items.length === 0) return '<div style="color:var(--text-muted);font-size:13px">No items to generate bundles from.</div>';
+  
+  const s = getSettings();
+  const suggestions = [];
+  
+  // Bundle deal
+  if (items.length >= 2) {
+    const totalCost = items.slice(0, 2).reduce((sum, i) => sum + (i.unit_price || 0), 0);
+    const bundlePrice = (totalCost / (1 - s.onlineMargin/100) * 0.9).toFixed(2);
+    suggestions.push({
+      type: 'Bundle',
+      title: `Buy Any 2 Products Bundle`,
+      desc: `Combine ${items[0]?.product_name?.substring(0,30) || 'Product 1'} + ${items[1]?.product_name?.substring(0,30) || 'Product 2'} at RM ${bundlePrice}. 10% off bundle discount drives higher cart value on Shopee/Lazada.`,
+    });
+  }
+  
+  // Buy more save more
+  if (items.length >= 1) {
+    const unitCost = items[0]?.unit_price || 0;
+    if (unitCost > 0) {
+      const price3 = (unitCost * 3 / (1 - s.onlineMargin/100) * 0.88).toFixed(2);
+      suggestions.push({
+        type: 'Volume',
+        title: `Buy 3 Save 12% Campaign`,
+        desc: `3-pack for RM ${price3} instead of buying single. Great for monthly supplement users. Push this on TikTok Live for high conversion.`,
+      });
+    }
+  }
+  
+  // Flash sale
+  suggestions.push({
+    type: 'Flash Sale',
+    title: `Weekend Flash Sale (Fri–Sun)`,
+    desc: `10% off all products Friday 8PM to Sunday 12PM. Boosts Shopee/Lazada ranking. Use voucher code: ANIAMOR10. Announce via Instagram Stories on Thursday.`,
+  });
+  
+  // Free gift
+  if (items.length >= 1) {
+    suggestions.push({
+      type: 'Free Gift',
+      title: `Free Sample With Every Order`,
+      desc: `Bundle a free sachet sample of ${items[0]?.product_name?.substring(0,25) || 'product'} with every order above RM 80. Encourages trial of new products and repeat purchase.`,
+    });
+  }
+  
+  return suggestions.map(s => `
+    <div class="promo-card" style="margin-bottom:10px">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px">
+        <span class="badge badge-amber">${s.type}</span>
+        <span class="promo-title" style="margin:0">${s.title}</span>
+      </div>
+      <div class="promo-desc">${s.desc}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// SAVE TO SHEETS
+// ============================================================
+async function saveToSheets() {
+  const data = state.currentInvoiceData;
+  if (!data) { showNotification('No invoice data to save.'); return; }
+  
+  const s = getSettings();
+  
+  // Save to local state
+  const invoice = {
+    id: Date.now(),
+    ...data,
+    savedAt: new Date().toISOString(),
+    synced: false,
+  };
+  state.invoices.push(invoice);
+  
+  // Save products
+  (data.items || []).forEach(item => {
+    const cost = item._landedCost || item.net_unit_price || item.unit_price || 0;
+    const prices = cost > 0 ? calcPrices(cost) : { offline: 0, shopee: 0, lazada: 0, tiktok: 0 };
+    const existing = state.products.find(p => p.name === item.product_name);
+    if (!existing) {
+      state.products.push({
+        id: Date.now() + Math.random(),
+        name: item.product_name,
+        sku: item.sku || '',
+        category: guessCategory(item.product_name),
+        cost: cost,
+        prices,
+        supplier: data.supplier_name,
+        invoiceDate: data.invoice_date,
+        qty: item.quantity,
+      });
+    }
+  });
+  
+  saveToStorage();
+  updateStats();
+  renderProductsTable();
+  
+  // Try push to Google Sheets if configured
+  if (s.appsScriptUrl) {
+    await pushToGoogleSheets(invoice);
+  } else {
+    showNotification('✅ Saved locally! (Connect Google Sheets in Settings to sync)');
+  }
+  
+  // Add to sync log
+  addSyncLog(data.invoice_number || 'Invoice', s.appsScriptUrl ? 'synced' : 'pending');
+  renderDashboard();
+}
+
+async function pushToGoogleSheets(invoiceData) {
+  const s = getSettings();
+  if (!s.appsScriptUrl) return;
+
+  try {
+    // Build URL with all invoice data as query params
+    // Apps Script doGet() reads e.parameter — works perfectly with GET + cors
+    const params = new URLSearchParams({
+      action: 'addInvoice',
+      invoice_number: invoiceData.invoice_number || '',
+      invoice_date: invoiceData.invoice_date || '',
+      supplier: invoiceData.supplier_name || '',
+      total: String(invoiceData.total_amount || 0),
+      items: JSON.stringify(invoiceData.items || []),
+      saved_at: new Date().toISOString(),
+      business: s.bizName || 'Ria Pet Mart',
+    });
+
+    const url = s.appsScriptUrl + '?' + params.toString();
+
+    // Apps Script deployed as "Anyone" returns CORS headers — use cors mode so we can read the real response
+    const response = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+    });
+
+    if (!response.ok) {
+      throw new Error('Server returned ' + response.status);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      invoiceData.synced = true;
+      saveToStorage();
+      showNotification('✅ Synced to Google Sheets!');
+    } else {
+      throw new Error(result.error || result.message || 'Unknown error from Sheets');
+    }
+
+  } catch (err) {
+    // Mark as unsynced so user can retry
+    invoiceData.synced = false;
+    saveToStorage();
+    console.error('Sheets sync error:', err);
+
+    // Show detailed error to help debug
+    showNotification('❌ Sheets sync failed: ' + err.message + ' — check Apps Script URL in Settings');
+    addSyncLog((invoiceData.invoice_number || 'Invoice') + ' [FAILED]', 'error');
+  }
+}
+
+function addSyncLog(name, status) {
+  state.syncLog.unshift({ name, status, time: new Date().toLocaleString('en-MY') });
+  if (state.syncLog.length > 50) state.syncLog = state.syncLog.slice(0, 50);
+  saveToStorage();
+}
+
+// ============================================================
+// PRODUCTS TABLE
+// ============================================================
+function renderProductsTable() {
+  const tbody = document.getElementById('products-tbody');
+  const search = document.getElementById('product-search')?.value?.toLowerCase() || '';
+  const category = document.getElementById('category-filter')?.value || '';
+  
+  let filtered = state.products.filter(p => {
+    const matchSearch = !search || p.name.toLowerCase().includes(search) || (p.sku || '').toLowerCase().includes(search);
+    const matchCat = !category || p.category === category;
+    return matchSearch && matchCat;
+  });
+  
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:30px">No products found.</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = filtered.map(p => `
+    <tr>
+      <td><strong>${p.name}</strong></td>
+      <td><span style="font-family:'DM Mono',monospace; font-size:11px; color:var(--text-muted)">${p.sku || '—'}</span></td>
+      <td><span class="badge badge-teal">${p.category}</span></td>
+      <td><span style="font-family:'DM Mono',monospace">RM ${(p.cost || 0).toFixed(2)}</span></td>
+      <td><span style="font-family:'DM Mono',monospace; color:var(--teal)">RM ${(p.prices?.offline || 0).toFixed(2)}</span></td>
+      <td>
+        <span style="font-size:11px; color:var(--text-muted)">S: RM ${(p.prices?.shopee || 0).toFixed(2)}</span><br>
+        <span style="font-size:11px; color:var(--text-muted)">TT: RM ${(p.prices?.tiktok || 0).toFixed(2)}</span>
+      </td>
+      <td><span class="badge ${getMaginBadge((p.cost||0), (p.prices?.offline||0))}">${calcMargin(p.cost||0, p.prices?.offline||0)}%</span></td>
+      <td>
+        <button class="btn btn-sm btn-secondary" onclick="deleteProduct('${p.id}')">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function getMaginBadge(cost, price) {
+  const margin = parseFloat(calcMargin(cost, price));
+  if (margin >= 40) return 'badge-teal';
+  if (margin >= 25) return 'badge-amber';
+  return 'badge-coral';
+}
+
+function filterProducts() { renderProductsTable(); }
+
+function deleteProduct(id) {
+  state.products = state.products.filter(p => String(p.id) !== String(id));
+  saveToStorage();
+  renderProductsTable();
+  updateStats();
+  showNotification('Product deleted.');
+}
+
+// ============================================================
+// PRICING OVERVIEW — clean table
+// ============================================================
+function renderPricingOverview() {
+  const container = document.getElementById('pricing-overview');
+  if (state.products.length === 0) {
+    container.innerHTML = '<div class="alert alert-info">ℹ️ Scan invoices first to see pricing here.</div>';
+    return;
+  }
+
+  const rows = state.products.map(p => {
+    const cost = p.cost || 0;
+    const pr   = p.prices || {};
+    const mOff = calcMargin(cost, pr.offline||0);
+    const mShp = calcMargin(cost, pr.shopee||0);
+    const mLaz = calcMargin(cost, pr.lazada||0);
+    const mTT  = calcMargin(cost, pr.tiktok||0);
+    const marginColor = (m) => parseFloat(m) >= 35 ? 'var(--teal)' : parseFloat(m) >= 20 ? 'var(--amber)' : 'var(--coral)';
+    return `
+      <tr>
+        <td>
+          <div style="font-weight:600;font-size:13px">${p.name}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${p.category||''} ${p.sku ? '· '+p.sku : ''}</div>
+        </td>
+        <td><span style="font-family:'DM Mono',monospace">RM ${cost.toFixed(2)}</span></td>
+        <td>
+          <div style="font-family:'DM Mono',monospace;font-weight:600">RM ${(pr.offline||0).toFixed(2)}</div>
+          <div style="font-size:11px;color:${marginColor(mOff)};font-weight:500">${mOff}% margin</div>
+        </td>
+        <td>
+          <div style="font-family:'DM Mono',monospace;font-weight:600">RM ${(pr.shopee||0).toFixed(2)}</div>
+          <div style="font-size:11px;color:${marginColor(mShp)};font-weight:500">${mShp}% margin</div>
+        </td>
+        <td>
+          <div style="font-family:'DM Mono',monospace;font-weight:600">RM ${(pr.lazada||0).toFixed(2)}</div>
+          <div style="font-size:11px;color:${marginColor(mLaz)};font-weight:500">${mLaz}% margin</div>
+        </td>
+        <td>
+          <div style="font-family:'DM Mono',monospace;font-weight:600">RM ${(pr.tiktok||0).toFixed(2)}</div>
+          <div style="font-size:11px;color:${marginColor(mTT)};font-weight:500">${mTT}% margin</div>
+        </td>
+        <td>
+          <button class="btn btn-sm btn-secondary" onclick="recalcProduct('${p.id}')">↻ Recalc</button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="card-title" style="margin:0">All Products — Channel Pricing</div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--text-muted);align-items:center">
+          <span style="color:var(--teal)">● ≥35% good</span>
+          <span style="color:var(--amber)">● ≥20% ok</span>
+          <span style="color:var(--coral)">● &lt;20% low</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="min-width:700px">
+          <thead>
+            <tr>
+              <th style="min-width:200px">Product</th>
+              <th>Cost (RM)</th>
+              <th>🏪 Offline</th>
+              <th>🛒 Shopee</th>
+              <th>📦 Lazada</th>
+              <th>🎵 TikTok</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function recalcProduct(id) {
+  const p = state.products.find(x => String(x.id) === String(id));
+  if (!p || !p.cost) return;
+  p.prices = calcPrices(p.cost);
+  saveToStorage();
+  renderPricingOverview();
+  showNotification('Prices recalculated.');
+}
+
+// ============================================================
+// PROMOTIONS
+// ============================================================
+function renderPromos() {
+  const container = document.getElementById('promos-container');
+  if (state.products.length === 0) {
+    container.innerHTML = '<div class="alert alert-info">Add products first, then use the button above to generate AI promotion ideas.</div>';
+    return;
+  }
+  const items = state.products.map(p => ({ product_name: p.name, unit_price: p.cost }));
+  const bundleHtml = generateBundleSuggestions(items);
+  container.innerHTML = `<div>${bundleHtml}</div>`;
+}
+
+async function generateAllPromos() {
+  const s = getSettings();
+  if (!s.claudeKey) {
+    showNotification('⚠️ Add Claude API key in Settings first!');
+    showPage('settings');
+    return;
+  }
+  
+  if (state.products.length === 0) {
+    showNotification('No products yet. Scan an invoice first!');
+    return;
+  }
+  
+  const container = document.getElementById('promos-container');
+  container.innerHTML = '<div class="ai-loading"><div class="spinner"></div> AI is generating promotion ideas for your products...</div>';
+  
+  const productList = state.products.map(p => `- ${p.name} (cost: RM${(p.cost||0).toFixed(2)}, offline: RM${(p.prices?.offline||0).toFixed(2)})`).join('\n');
+  
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': s.claudeKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `You are a marketing expert for Ria Pet Mart, a Malaysian pet store selling on Shopee, Lazada, TikTok Shop, and as a physical pet store.
+
+Here are the current products:
+${productList}
+
+Generate 6 creative promotion and bundle ideas specifically for Malaysian market. For each idea, include:
+1. Promotion type (Bundle/Flash Sale/Campaign/Loyalty/etc)
+2. Catchy Manglish/Malaysian-friendly title
+3. Description with specific pricing and strategy
+4. Best platform to run it on
+
+Format as JSON array:
+[{"type":"string","title":"string","desc":"string","platform":"string"}]
+
+Return ONLY valid JSON, no markdown.`
+        }]
+      })
+    });
+    
+    const data = await response.json();
+    const raw = data.content.map(c => c.text || '').join('').replace(/```json|```/g,'').trim();
+    const promos = JSON.parse(raw);
+    
+    container.innerHTML = promos.map(p => `
+      <div class="promo-card" style="margin-bottom:10px">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px">
+          <span class="badge badge-amber">${p.type}</span>
+          <span class="badge badge-teal" style="font-size:10px">${p.platform}</span>
+        </div>
+        <div class="promo-title">${p.title}</div>
+        <div class="promo-desc">${p.desc}</div>
+      </div>
+    `).join('');
+    
+  } catch (err) {
+    renderPromos();
+    showNotification('AI promo generation failed. Using standard suggestions.');
+  }
+}
+
+// ============================================================
+// SHEETS PAGE
+// ============================================================
+function renderSheetsPage() {
+  const s = getSettings();
+  
+  // Status
+  const statusEl = document.getElementById('sheets-status');
+  if (s.appsScriptUrl) {
+    statusEl.innerHTML = '<div class="alert alert-success">✅ Google Sheets configured. Data will sync automatically.</div>';
+  } else {
+    statusEl.innerHTML = '<div class="alert alert-warning">⚠️ Google Sheets not connected. Add your Apps Script URL in Settings.</div>';
+  }
+  
+  // Sync log
+  const logEl = document.getElementById('sync-log');
+  if (state.syncLog.length === 0) {
+    logEl.innerHTML = '<div style="color:var(--text-muted); font-size:13px">No sync history yet.</div>';
+  } else {
+    logEl.innerHTML = state.syncLog.slice(0, 10).map(l => `
+      <div class="sheet-row">
+        <div class="sheet-status ${l.status === 'synced' ? 'status-synced' : l.status === 'pending' ? 'status-pending' : 'status-error'}"></div>
+        <div style="flex:1">${l.name}</div>
+        <div style="color:var(--text-muted); font-size:11px">${l.time}</div>
+      </div>
+    `).join('');
+  }
+  
+  // LHDN table
+  const tbody = document.getElementById('lhdn-tbody');
+  if (state.invoices.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px">No invoices synced yet.</td></tr>';
+  } else {
+    tbody.innerHTML = state.invoices.map(inv => `
+      <tr>
+        <td><strong>${inv.invoice_number || '—'}</strong></td>
+        <td>${inv.invoice_date || '—'}</td>
+        <td>${inv.supplier_name || '—'}</td>
+        <td>${(inv.items || []).length} items</td>
+        <td>RM ${(inv.total_amount || 0).toFixed(2)}</td>
+        <td>${s.sst ? '6%' : 'N/A'}</td>
+        <td><span class="badge ${inv.synced ? 'badge-teal' : 'badge-amber'}">${inv.synced ? 'Synced' : 'Local'}</span></td>
+      </tr>
+    `).join('');
+  }
+  
+  const sheetIdEl = document.getElementById('sheet-id-display');
+  if (sheetIdEl) sheetIdEl.value = s.sheetId;
+}
+
+async function syncAllToSheets() {
+  const s = getSettings();
+  if (!s.appsScriptUrl) {
+    showNotification('⚠️ Configure Google Sheets in Settings first!');
+    showPage('settings');
+    return;
+  }
+  
+  const unsynced = state.invoices.filter(inv => !inv.synced);
+  if (unsynced.length === 0) {
+    showNotification('All invoices already synced!');
+    return;
+  }
+  
+  let syncCount = 0;
+  for (const inv of unsynced) {
+    await pushToGoogleSheets(inv);
+    syncCount++;
+  }
+  showNotification('✅ Synced ' + syncCount + ' invoice(s) to Google Sheets!');
+  
+  saveToStorage();
+  renderSheetsPage();
+  updateStats();
+}
+
+async function testSheetsConnection() {
+  const url = document.getElementById('settings-apps-script-url').value;
+  const resultEl = document.getElementById('sheets-test-result');
+  if (!url) { resultEl.innerHTML = '<span style="color:var(--coral)">Enter URL first</span>'; return; }
+  
+  resultEl.innerHTML = '<span style="color:var(--amber)">⏳ Testing connection...</span>';
+  try {
+    const resp = await fetch(url + '?action=ping', { method: 'GET', redirect: 'follow' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (data.success) {
+      resultEl.innerHTML = '<span style="color:var(--teal)">✅ Connected! Google Sheets is ready. Message: ' + (data.message || 'OK') + '</span>';
+    } else {
+      resultEl.innerHTML = '<span style="color:var(--coral)">⚠️ Reached but got error: ' + (data.error || JSON.stringify(data)) + '</span>';
+    }
+  } catch (err) {
+    resultEl.innerHTML = 
+      '<span style="color:var(--coral)">❌ Failed: ' + err.message + '</span>' +
+      '<br><small style="color:var(--text-muted)">Check: (1) URL ends in /exec (2) Access = Anyone (3) Re-deployed after code change</small>';
+  }
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openAddProductModal() {
+  document.getElementById('add-product-modal').classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function calcModalPrices() {
+  const cost = parseFloat(document.getElementById('modal-product-cost').value) || 0;
+  if (cost <= 0) {
+    document.getElementById('modal-pricing-preview').style.display = 'none';
+    return;
+  }
+  
+  const prices = calcPrices(cost);
+  document.getElementById('modal-pricing-preview').style.display = 'block';
+  document.getElementById('mp-offline').textContent = 'RM ' + prices.offline.toFixed(2);
+  document.getElementById('mp-offline-m').textContent = calcMargin(cost, prices.offline) + '% margin';
+  document.getElementById('mp-shopee').textContent = 'RM ' + prices.shopee.toFixed(2);
+  document.getElementById('mp-shopee-m').textContent = calcMargin(cost, prices.shopee) + '% margin';
+  document.getElementById('mp-lazada').textContent = 'RM ' + prices.lazada.toFixed(2);
+  document.getElementById('mp-lazada-m').textContent = calcMargin(cost, prices.lazada) + '% margin';
+  document.getElementById('mp-tiktok').textContent = 'RM ' + prices.tiktok.toFixed(2);
+  document.getElementById('mp-tiktok-m').textContent = calcMargin(cost, prices.tiktok) + '% margin';
+}
+
+function saveProductFromModal() {
+  const name = document.getElementById('modal-product-name').value.trim();
+  const cost = parseFloat(document.getElementById('modal-product-cost').value) || 0;
+  if (!name || cost <= 0) { showNotification('Please fill in product name and cost price.'); return; }
+  
+  const prices = calcPrices(cost);
+  state.products.push({
+    id: Date.now(),
+    name,
+    sku: document.getElementById('modal-product-sku').value,
+    category: document.getElementById('modal-product-category').value,
+    cost,
+    prices,
+    supplier: document.getElementById('modal-product-supplier').value,
+    qty: parseInt(document.getElementById('modal-product-qty').value) || 1,
+    invoiceDate: new Date().toISOString().split('T')[0],
+  });
+  
+  saveToStorage();
+  updateStats();
+  renderProductsTable();
+  renderPricingOverview();
+  closeModal('add-product-modal');
+  
+  document.getElementById('modal-product-name').value = '';
+  document.getElementById('modal-product-cost').value = '';
+  document.getElementById('modal-pricing-preview').style.display = 'none';
+  
+  showNotification('✅ Product added!');
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function calcProjection(inv) {
+  // For each item in invoice, calc profit if 100% sold at each channel
+  const items = inv.items || [];
+  let totalCost = 0, offlineRev = 0, shopeeRev = 0, lazadaRev = 0, tiktokRev = 0;
+  items.forEach(item => {
+    const cost = parseFloat(item.unit_price) || 0;
+    const qty  = parseInt(item.quantity) || 1;
+    if (cost <= 0) return;
+    const prices = calcPrices(cost);
+    totalCost  += cost * qty;
+    offlineRev += prices.offline * qty;
+    shopeeRev  += prices.shopee  * qty;
+    lazadaRev  += prices.lazada  * qty;
+    tiktokRev  += prices.tiktok  * qty;
+  });
+  return {
+    totalCost,
+    offline: { rev: offlineRev, profit: offlineRev - totalCost },
+    shopee:  { rev: shopeeRev,  profit: shopeeRev  - totalCost },
+    lazada:  { rev: lazadaRev,  profit: lazadaRev  - totalCost },
+    tiktok:  { rev: tiktokRev,  profit: tiktokRev  - totalCost },
+  };
+}
+
+function renderDashboard() {
+  const recentList = document.getElementById('recent-invoices-list');
+  const dashPromos = document.getElementById('dashboard-promos');
+
+  // ── Recent invoices with per-invoice projection ──
+  if (state.invoices.length === 0) {
+    recentList.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px 0;text-align:center">No invoices yet. Scan your first invoice to get started.</div>';
+  } else {
+    recentList.innerHTML = state.invoices.slice(-5).reverse().map(inv => {
+      const proj = calcProjection(inv);
+      const hasItems = (inv.items||[]).length > 0 && proj.totalCost > 0;
+      return `
+        <div style="padding:12px 0; border-bottom:1px solid var(--border)">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:${hasItems?'10px':'0'}">
+            <div>
+              <div style="font-weight:600; font-size:13px">${inv.invoice_number || 'Invoice'}</div>
+              <div style="font-size:11px; color:var(--text-muted)">${inv.supplier_name||'—'} · ${inv.invoice_date||'—'} · ${(inv.items||[]).length} items</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">RM ${(inv.total_amount||0).toFixed(2)}</div>
+              <span class="badge ${inv.synced?'badge-teal':'badge-amber'}" style="font-size:10px">${inv.synced?'Synced':'Local'}</span>
+            </div>
+          </div>
+          ${hasItems ? `
+          <div style="background:var(--gray-100);border-radius:8px;padding:10px 12px;">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-bottom:8px">💰 100% Sold Profit Projection</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+              ${[
+                {label:'🏪 Offline', profit: proj.offline.profit, rev: proj.offline.rev},
+                {label:'🛒 Shopee',  profit: proj.shopee.profit,  rev: proj.shopee.rev},
+                {label:'📦 Lazada',  profit: proj.lazada.profit,  rev: proj.lazada.rev},
+                {label:'🎵 TikTok',  profit: proj.tiktok.profit,  rev: proj.tiktok.rev},
+              ].map(ch => `
+                <div style="background:white;border-radius:6px;padding:8px;border:1px solid var(--border);text-align:center">
+                  <div style="font-size:9px;color:var(--text-muted);margin-bottom:3px">${ch.label}</div>
+                  <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--teal)">RM ${ch.profit.toFixed(0)}</div>
+                  <div style="font-size:9px;color:var(--text-muted)">rev RM ${ch.rev.toFixed(0)}</div>
+                </div>
+              `).join('')}
+            </div>
+            <div style="margin-top:6px;font-size:10px;color:var(--text-muted)">Stock cost: RM ${proj.totalCost.toFixed(2)} · Best channel: ${
+              (() => {
+                const channels = [{n:'Offline',p:proj.offline.profit},{n:'Shopee',p:proj.shopee.profit},{n:'Lazada',p:proj.lazada.profit},{n:'TikTok',p:proj.tiktok.profit}];
+                const best = channels.reduce((a,b) => b.p > a.p ? b : a);
+                return '<strong style="color:var(--teal)">' + best.n + '</strong> (RM ' + best.p.toFixed(0) + ' profit)';
+              })()
+            }</div>
+          </div>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ── Promo suggestions ──
+  if (state.products.length > 0) {
+    const items = state.products.slice(0, 2).map(p => ({ product_name: p.name, unit_price: p.cost }));
+    dashPromos.innerHTML = '<div style="font-size:12px">' + generateBundleSuggestions(items) + '</div>';
+  }
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function updateStats() {
+  document.getElementById('stat-invoices').textContent = state.invoices.length;
+  document.getElementById('stat-products').textContent = state.products.length;
+  document.getElementById('stat-synced').textContent = state.invoices.filter(i => i.synced).length;
+
+  if (state.products.length > 0) {
+    const avgMargin = state.products.reduce((sum, p) => {
+      return sum + parseFloat(calcMargin(p.cost || 0, p.prices?.offline || 0));
+    }, 0) / state.products.length;
+    document.getElementById('stat-margin').textContent = avgMargin.toFixed(1) + '%';
+  }
+
+  // Total projected profit across ALL invoices if 100% sold offline
+  if (state.invoices.length > 0) {
+    let totalProfit = 0;
+    state.invoices.forEach(inv => {
+      const proj = calcProjection(inv);
+      totalProfit += proj.offline.profit;
+    });
+    const el = document.getElementById('stat-profit');
+    if (el) el.textContent = 'RM ' + totalProfit.toFixed(0);
+  }
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function guessCategory(name) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('skin') || n.includes('coat') || n.includes('fur')) return 'Skin & Coat';
+  if (n.includes('gut') || n.includes('digest') || n.includes('probiotic')) return 'Gut Health';
+  if (n.includes('liver') || n.includes('hepat')) return 'Liver Care';
+  if (n.includes('joint') || n.includes('bone') || n.includes('hip')) return 'Bone & Joint';
+  if (n.includes('renal') || n.includes('kidney')) return 'Renal Care';
+  if (n.includes('immune') || n.includes('vitamin')) return 'Immune Support';
+  if (n.includes('calm') || n.includes('anxiety') || n.includes('stress')) return 'Calmness';
+  if (n.includes('weight') || n.includes('slim')) return 'Weight Management';
+  return 'General Wellness';
+}
+
+function resetScan() {
+  document.getElementById('extraction-panel').style.display = 'none';
+  document.getElementById('pricing-panel').style.display = 'none';
+  document.getElementById('preview-image').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  state.currentInvoiceData = null;
+  state.capturedImageBase64 = null;
+}
+
+function addManualProduct() {
+  const supplier = document.getElementById('manual-supplier').value;
+  const invNo = document.getElementById('manual-inv-no').value;
+  const date = document.getElementById('manual-date').value;
+  
+  if (!invNo) { showNotification('Please enter invoice number first.'); return; }
+  
+  state.currentInvoiceData = {
+    invoice_number: invNo,
+    invoice_date: date,
+    supplier_name: supplier,
+    total_amount: 0,
+    items: [],
+  };
+  
+  openAddProductModal();
+  showNotification('Add products to this invoice using the form.');
+}
+
+function saveSheetId() {
+  const id = document.getElementById('sheet-id-display').value;
+  const s = JSON.parse(localStorage.getItem('aniamor_settings') || '{}');
+  s.sheetId = id;
+  localStorage.setItem('aniamor_settings', JSON.stringify(s));
+  document.getElementById('settings-sheet-id').value = id;
+}
+
+function clearAllData() {
+  if (confirm('Are you sure? This will delete ALL local data including products and invoices.')) {
+    localStorage.removeItem('aniamor_products');
+    localStorage.removeItem('aniamor_invoices');
+    localStorage.removeItem('aniamor_synclog');
+    state.products = [];
+    state.invoices = [];
+    state.syncLog = [];
+    updateStats();
+    renderProductsTable();
+    renderDashboard();
+    showNotification('All data cleared.');
+  }
+}
+
+function showNotification(msg) {
+  const el = document.getElementById('notification');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// Close modal on overlay click
+document.getElementById('add-product-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal('add-product-modal');
+});
+
+// INIT — show login screen first
+(function() {
+  if (isLoggedIn()) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'flex';
+    init();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('main-app').style.display = 'none';
+    setTimeout(() => document.getElementById('login-user').focus(), 100);
+  }
+})();
+</script>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📥 Export to Excel</div>
+      <button class="modal-close" onclick="closeModal('export-modal')">✕</button>
+    </div>
+    <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px">Choose what to export. Perfect for year-end LHDN tax submission.</p>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button class="btn btn-primary btn-lg" style="justify-content:flex-start; gap:12px" onclick="exportExcel('all')">
+        <span style="font-size:20px">📊</span>
+        <div style="text-align:left"><div style="font-weight:600">Full Year-End Report</div><div style="font-size:11px; opacity:0.8">All invoices + products + tax summary in one file</div></div>
+      </button>
+      <button class="btn btn-secondary btn-lg" style="justify-content:flex-start; gap:12px" onclick="exportExcel('invoices')">
+        <span style="font-size:20px">🧾</span>
+        <div style="text-align:left"><div style="font-weight:600">Invoices Only</div><div style="font-size:11px; opacity:0.7">All supplier invoices with dates and amounts</div></div>
+      </button>
+      <button class="btn btn-secondary btn-lg" style="justify-content:flex-start; gap:12px" onclick="exportExcel('products')">
+        <span style="font-size:20px">📦</span>
+        <div style="text-align:left"><div style="font-weight:600">Products & Pricing</div><div style="font-size:11px; opacity:0.7">Full product catalog with all channel prices</div></div>
+      </button>
+      <button class="btn btn-secondary btn-lg" style="justify-content:flex-start; gap:12px" onclick="exportExcel('tax')">
+        <span style="font-size:20px">🏛️</span>
+        <div style="text-align:left"><div style="font-weight:600">LHDN Tax Summary</div><div style="font-size:11px; opacity:0.7">Tax-ready format for LHDN submission</div></div>
+      </button>
+    </div>
+    <div style="margin-top:16px; padding:12px; background:var(--teal-light); border-radius:8px; font-size:12px; color:var(--teal);">
+      💡 Tip: Export the Full Year-End Report at the end of each financial year and keep it for LHDN records.
+    </div>
+  </div>
+</div>
+
+<!-- CREDENTIALS MODAL -->
+<div class="modal-overlay" id="credentials-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔐 Change Login Credentials</div>
+      <button class="modal-close" onclick="closeModal('credentials-modal')">✕</button>
+    </div>
+    <div class="alert alert-warning" style="margin-bottom:16px">⚠️ Write down your new credentials before saving. If you forget, you will need to clear browser data to reset.</div>
+    <div class="form-group">
+      <label class="form-label">New Username</label>
+      <input class="form-input" id="new-username" placeholder="Enter new username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">New Password</label>
+      <input class="form-input" type="password" id="new-password" placeholder="Enter new password (min 6 chars)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirm Password</label>
+      <input class="form-input" type="password" id="confirm-password" placeholder="Re-enter password">
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary" style="flex:1" onclick="saveCredentials()">Save Credentials</button>
+      <button class="btn btn-secondary" onclick="closeModal('credentials-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main-app -->
+</body>
+</html>
