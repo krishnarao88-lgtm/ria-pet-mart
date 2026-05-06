@@ -474,12 +474,24 @@ tr:hover td { background: var(--gray-100); }
 }
 .notification.show { opacity: 1; transform: translateY(0); }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onerror="console.warn('XLSX library failed to load - Excel export disabled')"></script>
 </head>
 <body>
+<script>
+// Catch any JS errors and show them visibly instead of blank page
+window.onerror = function(msg, src, line, col, err) {
+  document.body.innerHTML = '<div style="font-family:monospace;padding:40px;background:#fff;color:#333">'
+    + '<h2 style="color:#c0392b">⚠️ Dashboard Error</h2>'
+    + '<p><strong>Error:</strong> ' + msg + '</p>'
+    + '<p><strong>Line:</strong> ' + line + '</p>'
+    + '<p style="margin-top:20px;color:#666">Please take a screenshot and share with support.</p>'
+    + '</div>';
+  return true;
+};
+</script>
 
 <!-- LOGIN SCREEN -->
-<div id="login-screen" style="display:none; position:fixed; inset:0; background:#F7F6F1; z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+<div id="login-screen" style="position:fixed; inset:0; background:#F7F6F1; z-index:9999; align-items:center; justify-content:center; flex-direction:column; display:none;">
   <div style="background:#2C2C2A; border-radius:16px; padding:40px; width:100%; max-width:380px; margin:20px;">
     <div style="text-align:center; margin-bottom:28px;">
       <div style="font-size:32px; margin-bottom:8px;">🐾</div>
@@ -529,6 +541,12 @@ tr:hover td { background: var(--gray-100); }
     <div class="nav-item" onclick="showPage('promotions')">
       <span class="nav-icon">🎁</span> Promotions
     </div>
+    <div class="nav-item" onclick="showPage('bundle')">
+      <span class="nav-icon">🧮</span> Bundle Calc
+    </div>
+    <div class="nav-item" onclick="showPage('pnl')">
+      <span class="nav-icon">📈</span> P&amp;L Report
+    </div>
     <div class="sidebar-section">System</div>
     <div class="nav-item" onclick="showPage('sheets')">
       <span class="nav-icon">📋</span> Google Sheets
@@ -561,50 +579,80 @@ tr:hover td { background: var(--gray-100); }
         <button class="btn btn-sm" style="margin-top:12px; background:white; color:var(--teal)" onclick="showPage('settings')">Go to Settings →</button>
       </div>
 
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px" class="section">
-        <div class="stat-card">
-          <div class="stat-label">Total Invoices</div>
+      <!-- KPI STRIP -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px">
+        <div class="stat-card" style="border-top:3px solid var(--gray-200)">
+          <div class="stat-label">Invoices</div>
           <div class="stat-value" id="stat-invoices">0</div>
-          <div class="stat-note">Scanned this month</div>
+          <div class="stat-note">Total scanned</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Products Tracked</div>
+        <div class="stat-card" style="border-top:3px solid var(--gray-200)">
+          <div class="stat-label">Products</div>
           <div class="stat-value" id="stat-products">0</div>
-          <div class="stat-note">In database</div>
+          <div class="stat-note">In catalog</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="border-top:3px solid var(--amber)">
           <div class="stat-label">Avg Margin</div>
-          <div class="stat-value" id="stat-margin">—</div>
-          <div class="stat-note">Across all channels</div>
+          <div class="stat-value" id="stat-margin" style="color:var(--amber)">—</div>
+          <div class="stat-note">Offline channel</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Sheets Synced</div>
-          <div class="stat-value" id="stat-synced">0</div>
-          <div class="stat-note">Records in Google Sheets</div>
+        <div class="stat-card" style="border-top:3px solid #639922">
+          <div class="stat-label">Synced</div>
+          <div class="stat-value" id="stat-synced" style="color:#639922">0</div>
+          <div class="stat-note">In Google Sheets</div>
         </div>
-        <div class="stat-card" style="border-left:3px solid var(--teal-mid)">
-          <div class="stat-label">💰 Max Profit (100% Sold)</div>
+        <div class="stat-card" style="border-top:3px solid var(--teal-mid); cursor:pointer" onclick="showPage('pricing')">
+          <div class="stat-label">Max Profit ↗</div>
           <div class="stat-value" id="stat-profit" style="color:var(--teal)">—</div>
-          <div class="stat-note">If all stock sold offline</div>
+          <div class="stat-note">100% sold offline</div>
         </div>
       </div>
 
-      <div class="grid-2 section">
-        <div class="card">
-          <div class="card-title">Recent Invoices</div>
-          <div id="recent-invoices-list">
-            <div style="color:var(--text-muted); font-size:13px; padding:20px 0; text-align:center">
-              No invoices yet. Scan your first invoice to get started.
+      <!-- MAIN GRID -->
+      <div style="display:grid;grid-template-columns:1fr 380px;gap:16px;align-items:start">
+
+        <!-- LEFT: Invoices list -->
+        <div class="card" style="min-height:420px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div class="card-title" style="margin:0">Recent Invoices</div>
+            <div style="display:flex;gap:8px">
+              <input id="inv-search" type="text" placeholder="Search..." class="form-input"
+                style="width:160px;padding:6px 10px;font-size:12px" oninput="filterInvoices()">
+              <button class="btn btn-sm btn-coral" onclick="removeSelectedInvoices()" id="del-inv-btn" style="display:none">🗑️ Remove</button>
             </div>
           </div>
+          <div id="recent-invoices-list"></div>
         </div>
-        <div class="card">
-          <div class="card-title">Active Promotions</div>
-          <div id="dashboard-promos">
-            <div style="color:var(--text-muted); font-size:13px; padding:20px 0; text-align:center">
-              AI will suggest promotions after you scan invoices.
+
+        <!-- RIGHT: Profit projection + promos -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <!-- Profit projection card -->
+          <div class="card" id="profit-projection-card">
+            <div class="card-title">💰 Profit Projection</div>
+            <div id="profit-projection-content">
+              <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">
+                Scan invoices to see profit projections.
+              </div>
             </div>
           </div>
+
+          <!-- Channel breakdown -->
+          <div class="card" id="channel-breakdown-card" style="display:none">
+            <div class="card-title">📊 Best Channel Breakdown</div>
+            <div id="channel-breakdown-content"></div>
+          </div>
+
+          <!-- Promo ideas -->
+          <div class="card">
+            <div class="card-title">🎁 Promo Ideas</div>
+            <div id="dashboard-promos">
+              <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px 0">
+                Scan invoices to get promo ideas.
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -766,6 +814,115 @@ tr:hover td { background: var(--gray-100); }
       </div>
     </div>
 
+
+    <!-- BUNDLE CALCULATOR PAGE -->
+    <div id="page-bundle" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Bundle Calculator</div>
+          <div class="page-subtitle">Build custom bundles, see cost & profit before publishing</div>
+        </div>
+        <button class="btn btn-primary" onclick="saveBundleDeal()">💾 Save Bundle Deal</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 380px;gap:16px;align-items:start">
+        <!-- Left: product picker -->
+        <div class="card">
+          <div class="card-title">🛍️ Select Products for Bundle</div>
+          <input class="form-input" id="bundle-search" placeholder="Search products..." style="margin-bottom:12px" oninput="renderBundlePicker()">
+          <div id="bundle-product-list"></div>
+        </div>
+        <!-- Right: bundle summary -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-title">📦 Bundle Summary</div>
+            <div id="bundle-items-list">
+              <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Add products from the left to build a bundle.</div>
+            </div>
+          </div>
+          <div class="card" id="bundle-calc-card" style="display:none">
+            <div class="card-title">💰 Pricing & Profit</div>
+            <div style="margin-bottom:12px">
+              <label class="form-label">Bundle Name</label>
+              <input class="form-input" id="bundle-name" placeholder="e.g. Skin Care Starter Pack">
+            </div>
+            <div style="margin-bottom:12px">
+              <label class="form-label">Channel</label>
+              <select class="form-input" id="bundle-channel" onchange="calcBundleProfit()">
+                <option value="offline">🏪 Offline</option>
+                <option value="shopee">🛒 Shopee</option>
+                <option value="lazada">📦 Lazada</option>
+                <option value="tiktok">🎵 TikTok</option>
+              </select>
+            </div>
+            <div style="margin-bottom:12px">
+              <label class="form-label">Your Bundle Price (RM)</label>
+              <input class="form-input" type="number" id="bundle-price" placeholder="0.00" oninput="calcBundleProfit()" step="0.10">
+            </div>
+            <div id="bundle-result"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P&L REPORT PAGE -->
+    <div id="page-pnl" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Daily P&amp;L Report</div>
+          <div class="page-subtitle">Log today's sales at close of day — see if you're winning or losing</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" onclick="exportPnlExcel()">📥 Export Excel</button>
+          <button class="btn btn-primary" onclick="openModal('pnl-entry-modal')">+ Log Today's Sales</button>
+        </div>
+      </div>
+
+      <!-- P&L Summary Cards -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+        <div class="stat-card" style="border-top:3px solid var(--teal-mid)">
+          <div class="stat-label">Revenue (MTD)</div>
+          <div class="stat-value" id="pnl-mtd-revenue" style="color:var(--teal)">RM 0</div>
+          <div class="stat-note">This month</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid var(--coral)">
+          <div class="stat-label">COGS (MTD)</div>
+          <div class="stat-value" id="pnl-mtd-cogs" style="color:var(--coral)">RM 0</div>
+          <div class="stat-note">Cost of goods sold</div>
+        </div>
+        <div class="stat-card" style="border-top:3px solid var(--amber)">
+          <div class="stat-label">OPEX (MTD)</div>
+          <div class="stat-value" id="pnl-mtd-opex" style="color:var(--amber)">RM 0</div>
+          <div class="stat-note">Fixed + variable costs</div>
+        </div>
+        <div class="stat-card" id="pnl-profit-card" style="border-top:3px solid #639922">
+          <div class="stat-label">Net Profit (MTD)</div>
+          <div class="stat-value" id="pnl-mtd-profit">RM 0</div>
+          <div class="stat-note" id="pnl-profit-note">—</div>
+        </div>
+      </div>
+
+      <!-- Daily P&L Table -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div class="card-title" style="margin:0">Daily Log</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="month" class="form-input" id="pnl-month-filter" style="width:160px" onchange="renderPnlPage()" value="${new Date().toISOString().slice(0,7)}">
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="pnl-table">
+            <thead>
+              <tr>
+                <th>Date</th><th>Channel</th><th>Revenue (RM)</th><th>COGS (RM)</th>
+                <th>Gross Profit</th><th>OPEX</th><th>Net Profit</th><th>Status</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="pnl-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- GOOGLE SHEETS PAGE -->
     <div id="page-sheets" class="page">
       <div class="page-header">
@@ -901,6 +1058,21 @@ tr:hover td { background: var(--gray-100); }
         <button class="btn btn-secondary btn-sm" style="margin-left:8px" onclick="logout()">🚪 Logout</button>
       </div>
       <div class="config-card">
+        <div class="config-title">🏢 Monthly OPEX (Fixed Costs)</div>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px">Enter your fixed monthly costs. These are used automatically in the daily P&amp;L report.</p>
+        <div id="opex-list"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <input class="form-input" id="opex-name-new" placeholder="e.g. Rent, Salary, Utilities..." style="flex:1">
+          <input class="form-input" type="number" id="opex-amount-new" placeholder="RM" style="width:100px">
+          <button class="btn btn-primary btn-sm" onclick="addOpex()">+ Add</button>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:var(--teal-light);border-radius:8px;font-size:12px;color:var(--teal)">
+          Total Monthly OPEX: <strong id="opex-total-display">RM 0.00</strong> 
+          · Daily (÷26 working days): <strong id="opex-daily-display">RM 0.00</strong>
+        </div>
+      </div>
+
+      <div class="config-card">
         <div class="config-title">⚠️ Danger Zone</div>
         <button class="btn btn-coral btn-sm" onclick="clearAllData()">🗑️ Clear All Local Data</button>
       </div>
@@ -1016,7 +1188,7 @@ function getCredentials() {
 }
 
 function isLoggedIn() {
-  return sessionStorage.getItem('rpm_session') === 'active';
+  return localStorage.getItem('rpm_session') === 'active';
 }
 
 function attemptLogin() {
@@ -1032,7 +1204,7 @@ function attemptLogin() {
   }
 
   if (user === creds.username && pass === creds.password) {
-    sessionStorage.setItem('rpm_session', 'active');
+    localStorage.setItem('rpm_session', 'active');
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'flex';
     init();
@@ -1046,7 +1218,7 @@ function attemptLogin() {
 
 function logout() {
   if (!confirm('Logout from Ria Pet Mart dashboard?')) return;
-  sessionStorage.removeItem('rpm_session');
+  localStorage.removeItem('rpm_session');
   document.getElementById('main-app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-user').value = '';
@@ -1298,6 +1470,404 @@ function styleExcelHeader(ws, start, end) {
   return ws;
 }
 
+
+// ============================================================
+// OPEX MANAGEMENT
+// ============================================================
+function getOpex() {
+  return JSON.parse(localStorage.getItem('rpm_opex') || '[]');
+}
+function saveOpex(list) {
+  localStorage.setItem('rpm_opex', JSON.stringify(list));
+}
+function getMonthlyOpexTotal() {
+  return getOpex().reduce((s, o) => s + (parseFloat(o.amount) || 0), 0);
+}
+function getDailyOpex() {
+  return getMonthlyOpexTotal() / 26; // 26 working days/month
+}
+
+function addOpex() {
+  const name   = document.getElementById('opex-name-new').value.trim();
+  const amount = parseFloat(document.getElementById('opex-amount-new').value) || 0;
+  if (!name || amount <= 0) { showNotification('Enter cost name and amount.'); return; }
+  const list = getOpex();
+  list.push({ id: Date.now(), name, amount });
+  saveOpex(list);
+  document.getElementById('opex-name-new').value   = '';
+  document.getElementById('opex-amount-new').value = '';
+  renderOpexList();
+  showNotification('✅ OPEX item added.');
+}
+
+function removeOpex(id) {
+  saveOpex(getOpex().filter(o => String(o.id) !== String(id)));
+  renderOpexList();
+}
+
+function renderOpexList() {
+  const el = document.getElementById('opex-list');
+  if (!el) return;
+  const list = getOpex();
+  if (list.length === 0) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;margin-bottom:8px">No OPEX items yet. Add your monthly fixed costs below.</div>';
+  } else {
+    el.innerHTML = list.map(o => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="flex:1;font-size:13px">${o.name}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--amber)">RM ${parseFloat(o.amount).toFixed(2)}/mo</span>
+        <button class="btn btn-sm" style="padding:2px 8px;font-size:11px;color:var(--coral);border-color:var(--coral)" onclick="removeOpex('${o.id}')">✕</button>
+      </div>`).join('');
+  }
+  const monthly = getMonthlyOpexTotal();
+  const daily   = monthly / 26;
+  const tot = document.getElementById('opex-total-display');
+  const day = document.getElementById('opex-daily-display');
+  if (tot) tot.textContent = 'RM ' + monthly.toFixed(2);
+  if (day) day.textContent = 'RM ' + daily.toFixed(2);
+}
+
+// ============================================================
+// BUNDLE CALCULATOR
+// ============================================================
+let bundleItems = []; // [{product, qty}]
+
+function renderBundlePicker() {
+  const el     = document.getElementById('bundle-product-list');
+  if (!el) return;
+  const search = (document.getElementById('bundle-search')?.value || '').toLowerCase();
+  const prods  = state.products.filter(p =>
+    !search || p.name.toLowerCase().includes(search)
+  );
+
+  if (prods.length === 0) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">No products found. Scan invoices to add products.</div>';
+    return;
+  }
+
+  el.innerHTML = prods.map(p => {
+    const inBundle = bundleItems.find(b => b.product.id === p.id);
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid ${inBundle ? 'var(--teal-mid)' : 'var(--border)'};border-radius:8px;margin-bottom:6px;background:${inBundle ? 'var(--teal-light)' : 'white'}">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:500;font-size:13px">${p.name}</div>
+          <div style="font-size:11px;color:var(--text-muted)">Cost: RM ${(p.cost||0).toFixed(2)} · ${p.category||''}</div>
+        </div>
+        ${inBundle
+          ? `<div style="display:flex;align-items:center;gap:6px">
+               <button class="btn btn-sm btn-secondary" style="padding:2px 8px" onclick="changeBundleQty('${p.id}',-1)">−</button>
+               <span style="font-family:'DM Mono',monospace;font-size:13px;min-width:20px;text-align:center">${inBundle.qty}</span>
+               <button class="btn btn-sm btn-secondary" style="padding:2px 8px" onclick="changeBundleQty('${p.id}',1)">+</button>
+               <button class="btn btn-sm btn-coral" style="padding:2px 8px" onclick="removeBundleItem('${p.id}')">✕</button>
+             </div>`
+          : `<button class="btn btn-sm btn-primary" onclick="addToBundleCalc('${p.id}')">+ Add</button>`
+        }
+      </div>`;
+  }).join('');
+}
+
+function addToBundleCalc(id) {
+  const p = state.products.find(x => String(x.id) === String(id));
+  if (!p) return;
+  if (!bundleItems.find(b => b.product.id === p.id)) {
+    bundleItems.push({ product: p, qty: 1 });
+  }
+  renderBundlePicker();
+  renderBundleSummary();
+}
+
+function changeBundleQty(id, delta) {
+  const item = bundleItems.find(b => String(b.product.id) === String(id));
+  if (!item) return;
+  item.qty = Math.max(1, item.qty + delta);
+  renderBundlePicker();
+  renderBundleSummary();
+}
+
+function removeBundleItem(id) {
+  bundleItems = bundleItems.filter(b => String(b.product.id) !== String(id));
+  renderBundlePicker();
+  renderBundleSummary();
+}
+
+function renderBundleSummary() {
+  const el    = document.getElementById('bundle-items-list');
+  const card  = document.getElementById('bundle-calc-card');
+  if (!el) return;
+
+  if (bundleItems.length === 0) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">Add products from the left.</div>';
+    if (card) card.style.display = 'none';
+    return;
+  }
+
+  const totalCost = bundleItems.reduce((s, b) => s + (b.product.cost || 0) * b.qty, 0);
+
+  el.innerHTML = `
+    <div style="margin-bottom:10px">
+      ${bundleItems.map(b => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:13px;font-weight:500">${b.product.name}</div>
+            <div style="font-size:11px;color:var(--text-muted)">Qty ${b.qty} × RM ${(b.product.cost||0).toFixed(2)}</div>
+          </div>
+          <div style="font-family:'DM Mono',monospace;font-size:13px">RM ${((b.product.cost||0)*b.qty).toFixed(2)}</div>
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:600">
+      <span>Total COGS</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--coral)">RM ${totalCost.toFixed(2)}</span>
+    </div>`;
+
+  if (card) card.style.display = 'block';
+  calcBundleProfit();
+}
+
+function calcBundleProfit() {
+  const el = document.getElementById('bundle-result');
+  if (!el || bundleItems.length === 0) return;
+
+  const bundlePrice  = parseFloat(document.getElementById('bundle-price')?.value) || 0;
+  const channel      = document.getElementById('bundle-channel')?.value || 'offline';
+  const totalCost    = bundleItems.reduce((s, b) => s + (b.product.cost || 0) * b.qty, 0);
+  const s            = getSettings();
+
+  // Fee deduction per channel
+  const feeMap = { offline: 0, shopee: s.platformFee/100, lazada: s.platformFee/100, tiktok: s.tiktokFee/100 };
+  const fee    = feeMap[channel] || 0;
+
+  const netRevenue   = bundlePrice * (1 - fee);
+  const grossProfit  = netRevenue - totalCost;
+  const margin       = bundlePrice > 0 ? (grossProfit / bundlePrice * 100) : 0;
+
+  // Suggested prices
+  const suggestedOff = totalCost > 0 ? calcPrices(totalCost / bundleItems.reduce((s,b)=>s+b.qty,0)).offline * bundleItems.reduce((s,b)=>s+b.qty,0) : 0;
+
+  const profitColor = grossProfit >= 0 ? 'var(--teal)' : 'var(--coral)';
+  const marginColor = margin >= 30 ? 'var(--teal)' : margin >= 15 ? 'var(--amber)' : 'var(--coral)';
+
+  el.innerHTML = bundlePrice <= 0 ? `
+    <div class="alert alert-info">Enter your bundle price above to see profit calculation.</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:8px">💡 Suggested bundle price (offline): <strong>RM ${suggestedOff.toFixed(2)}</strong></div>
+  ` : `
+    <div style="background:var(--gray-100);border-radius:8px;padding:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:12px">
+        <div><span style="color:var(--text-muted)">Bundle Price</span><br><strong style="font-family:'DM Mono',monospace">RM ${bundlePrice.toFixed(2)}</strong></div>
+        <div><span style="color:var(--text-muted)">${channel.charAt(0).toUpperCase()+channel.slice(1)} Fee (${(fee*100).toFixed(0)}%)</span><br><strong style="font-family:'DM Mono',monospace;color:var(--coral)">−RM ${(bundlePrice*fee).toFixed(2)}</strong></div>
+        <div><span style="color:var(--text-muted)">Net Revenue</span><br><strong style="font-family:'DM Mono',monospace">RM ${netRevenue.toFixed(2)}</strong></div>
+        <div><span style="color:var(--text-muted)">Total COGS</span><br><strong style="font-family:'DM Mono',monospace;color:var(--coral)">RM ${totalCost.toFixed(2)}</strong></div>
+      </div>
+      <div style="padding:12px;border-radius:6px;background:white;border:2px solid ${profitColor};text-align:center">
+        <div style="font-size:11px;color:var(--text-muted)">Gross Profit per Bundle</div>
+        <div style="font-size:26px;font-weight:700;font-family:'DM Mono',monospace;color:${profitColor}">RM ${grossProfit.toFixed(2)}</div>
+        <div style="font-size:12px;color:${marginColor};font-weight:600">${margin.toFixed(1)}% margin ${margin>=30?'✅':margin>=15?'⚠️':'❌'}</div>
+      </div>
+      ${bundlePrice < suggestedOff ? `<div style="margin-top:8px;font-size:11px;color:var(--amber)">⚠️ Price is below suggested (RM ${suggestedOff.toFixed(2)}). You may not hit your margin target.</div>` : ''}
+    </div>`;
+}
+
+function saveBundleDeal() {
+  const name = document.getElementById('bundle-name')?.value?.trim();
+  if (!name) { showNotification('Enter a bundle name first.'); return; }
+  if (bundleItems.length === 0) { showNotification('Add products to the bundle first.'); return; }
+  const price   = parseFloat(document.getElementById('bundle-price')?.value) || 0;
+  const channel = document.getElementById('bundle-channel')?.value || 'offline';
+  const totalCost = bundleItems.reduce((s,b) => s + (b.product.cost||0)*b.qty, 0);
+  const deals = JSON.parse(localStorage.getItem('rpm_bundles') || '[]');
+  deals.push({ id: Date.now(), name, price, channel, totalCost, items: bundleItems.map(b=>({name:b.product.name,qty:b.qty,cost:b.product.cost})), createdAt: new Date().toISOString() });
+  localStorage.setItem('rpm_bundles', JSON.stringify(deals));
+  bundleItems = [];
+  renderBundlePicker();
+  renderBundleSummary();
+  document.getElementById('bundle-name').value = '';
+  document.getElementById('bundle-price').value = '';
+  showNotification('✅ Bundle deal saved!');
+}
+
+// ============================================================
+// P&L REPORT
+// ============================================================
+function getPnlEntries() {
+  return JSON.parse(localStorage.getItem('rpm_pnl') || '[]');
+}
+function savePnlEntries(list) {
+  localStorage.setItem('rpm_pnl', JSON.stringify(list));
+}
+
+function calcPnlPreview() {
+  const rev   = parseFloat(document.getElementById('pnl-revenue')?.value) || 0;
+  const cogs  = parseFloat(document.getElementById('pnl-cogs')?.value)    || 0;
+  const extra = parseFloat(document.getElementById('pnl-extra-cost')?.value) || 0;
+  const daily = getDailyOpex();
+  const gross = rev - cogs - extra;
+  const net   = gross - daily;
+  const box   = document.getElementById('pnl-modal-preview');
+  if (box) box.style.display = rev > 0 ? 'block' : 'none';
+  const set = (id, val) => { const e=document.getElementById(id); if(e) e.textContent=val; };
+  set('prev-rev',   'RM ' + rev.toFixed(2));
+  set('prev-cogs',  'RM ' + (cogs+extra).toFixed(2));
+  set('prev-gross', 'RM ' + gross.toFixed(2));
+  set('prev-opex',  'RM ' + daily.toFixed(2));
+  set('prev-net',   'RM ' + net.toFixed(2));
+  const netBox = document.getElementById('prev-net-box');
+  const netEl  = document.getElementById('prev-net');
+  const stEl   = document.getElementById('prev-status');
+  if (netBox && netEl && stEl) {
+    if (net > 0)      { netBox.style.background='var(--teal-light)'; netEl.style.color='var(--teal)'; stEl.textContent='🟢 PROFITABLE'; stEl.style.color='var(--teal)'; }
+    else if (net > -daily*0.5) { netBox.style.background='var(--amber-light)'; netEl.style.color='var(--amber)'; stEl.textContent='🟡 BREAK EVEN'; stEl.style.color='var(--amber)'; }
+    else              { netBox.style.background='var(--coral-light)'; netEl.style.color='var(--coral)'; stEl.textContent='🔴 LOSS TODAY'; stEl.style.color='var(--coral)'; }
+  }
+}
+
+function savePnlEntry() {
+  const date    = document.getElementById('pnl-date')?.value;
+  const rev     = parseFloat(document.getElementById('pnl-revenue')?.value)    || 0;
+  const cogs    = parseFloat(document.getElementById('pnl-cogs')?.value)       || 0;
+  const extra   = parseFloat(document.getElementById('pnl-extra-cost')?.value) || 0;
+  const channel = document.getElementById('pnl-channel')?.value || 'all';
+  const notes   = document.getElementById('pnl-notes')?.value   || '';
+  if (!date) { showNotification('Please select a date.'); return; }
+  if (rev <= 0) { showNotification('Please enter revenue.'); return; }
+
+  const daily  = getDailyOpex();
+  const gross  = rev - cogs - extra;
+  const net    = gross - daily;
+
+  const entries = getPnlEntries();
+  // Check duplicate date+channel
+  const dupIdx = entries.findIndex(e => e.date === date && e.channel === channel);
+  if (dupIdx >= 0) {
+    if (!confirm('Entry for ' + date + ' (' + channel + ') already exists. Replace it?')) return;
+    entries.splice(dupIdx, 1);
+  }
+
+  entries.push({ id: Date.now(), date, channel, revenue: rev, cogs, extraCost: extra, dailyOpex: daily, grossProfit: gross, netProfit: net, notes, createdAt: new Date().toISOString() });
+  entries.sort((a,b) => a.date.localeCompare(b.date));
+  savePnlEntries(entries);
+  closeModal('pnl-entry-modal');
+
+  // Reset form
+  ['pnl-revenue','pnl-cogs','pnl-extra-cost','pnl-notes'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+  document.getElementById('pnl-modal-preview').style.display = 'none';
+
+  renderPnlPage();
+  showNotification('✅ P&L entry saved!');
+
+  // Sync to Sheets if connected
+  syncPnlToSheets({ date, channel, revenue:rev, cogs, extraCost:extra, dailyOpex:daily, grossProfit:gross, netProfit:net, notes });
+}
+
+function deletePnlEntry(id) {
+  if (!confirm('Delete this P&L entry?')) return;
+  savePnlEntries(getPnlEntries().filter(e => String(e.id) !== String(id)));
+  renderPnlPage();
+  showNotification('Entry deleted.');
+}
+
+function renderPnlPage() {
+  const monthFilter = document.getElementById('pnl-month-filter')?.value || new Date().toISOString().slice(0,7);
+  const entries     = getPnlEntries().filter(e => e.date.startsWith(monthFilter));
+
+  // MTD totals
+  const mtdRev    = entries.reduce((s,e) => s+e.revenue,     0);
+  const mtdCogs   = entries.reduce((s,e) => s+(e.cogs||0)+(e.extraCost||0), 0);
+  const mtdOpex   = entries.reduce((s,e) => s+(e.dailyOpex||0), 0);
+  const mtdProfit = entries.reduce((s,e) => s+e.netProfit,   0);
+
+  const setEl = (id, val) => { const e=document.getElementById(id); if(e) e.textContent=val; };
+  setEl('pnl-mtd-revenue', 'RM ' + mtdRev.toFixed(2));
+  setEl('pnl-mtd-cogs',    'RM ' + mtdCogs.toFixed(2));
+  setEl('pnl-mtd-opex',    'RM ' + mtdOpex.toFixed(2));
+  setEl('pnl-mtd-profit',  'RM ' + mtdProfit.toFixed(2));
+
+  const profitCard = document.getElementById('pnl-profit-card');
+  const profitVal  = document.getElementById('pnl-mtd-profit');
+  const profitNote = document.getElementById('pnl-profit-note');
+  if (profitCard && profitVal && profitNote) {
+    if (mtdProfit > 0) {
+      profitCard.style.borderTopColor = 'var(--teal-mid)';
+      profitVal.style.color  = 'var(--teal)';
+      profitNote.textContent = '🟢 Profitable month';
+    } else if (mtdProfit >= -100) {
+      profitCard.style.borderTopColor = 'var(--amber)';
+      profitVal.style.color  = 'var(--amber)';
+      profitNote.textContent = '🟡 Near break-even';
+    } else {
+      profitCard.style.borderTopColor = 'var(--coral)';
+      profitVal.style.color  = 'var(--coral)';
+      profitNote.textContent = '🔴 Loss this month';
+    }
+  }
+
+  const tbody = document.getElementById('pnl-tbody');
+  if (!tbody) return;
+
+  if (entries.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:30px">No entries for this month. Click the button above to start.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = [...entries].reverse().map(e => {
+    const status = e.netProfit > 0 ? '🟢 Profit' : e.netProfit >= -(e.dailyOpex||0)*0.5 ? '🟡 Break Even' : '🔴 Loss';
+    const profitCol = e.netProfit > 0 ? 'var(--teal)' : e.netProfit >= 0 ? 'var(--amber)' : 'var(--coral)';
+    const chIcon = {all:'📊',offline:'🏪',shopee:'🛒',lazada:'📦',tiktok:'🎵'}[e.channel]||'📊';
+    return `<tr>
+      <td><strong>${e.date}</strong>${e.notes ? '<br><span style="font-size:10px;color:var(--text-muted)">'+e.notes+'</span>' : ''}</td>
+      <td>${chIcon} ${e.channel}</td>
+      <td style="font-family:'DM Mono',monospace">RM ${e.revenue.toFixed(2)}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--coral)">RM ${((e.cogs||0)+(e.extraCost||0)).toFixed(2)}</td>
+      <td style="font-family:'DM Mono',monospace">RM ${e.grossProfit.toFixed(2)}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--amber)">RM ${(e.dailyOpex||0).toFixed(2)}</td>
+      <td style="font-family:'DM Mono',monospace;color:${profitCol};font-weight:600">RM ${e.netProfit.toFixed(2)}</td>
+      <td>${status}</td>
+      <td><button class="btn btn-sm" style="padding:2px 8px;color:var(--coral);border-color:var(--coral)" onclick="deletePnlEntry('${e.id}')">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function syncPnlToSheets(entry) {
+  const s = getSettings();
+  if (!s.appsScriptUrl) return;
+  try {
+    const params = new URLSearchParams({ action: 'addPnl', ...Object.fromEntries(Object.entries(entry).map(([k,v])=>[k,String(v)])) });
+    await fetch(s.appsScriptUrl + '?' + params.toString(), { method: 'GET', redirect: 'follow' });
+  } catch(e) { console.warn('P&L sync failed:', e.message); }
+}
+
+function exportPnlExcel() {
+  if (typeof XLSX === 'undefined') { showNotification('Excel library not loaded.'); return; }
+  const entries = getPnlEntries();
+  if (entries.length === 0) { showNotification('No P&L entries to export.'); return; }
+  const wb = XLSX.utils.book_new();
+  const rows = [
+    ['Ria Pet Mart — P&L Report', '', '', '', '', '', '', ''],
+    ['Exported:', new Date().toLocaleString('en-MY'), '', '', '', '', '', ''],
+    ['Monthly OPEX:', 'RM ' + getMonthlyOpexTotal().toFixed(2), '', '', '', '', '', ''],
+    [''],
+    ['Date', 'Channel', 'Revenue (RM)', 'COGS (RM)', 'Gross Profit (RM)', 'Daily OPEX (RM)', 'Net Profit (RM)', 'Status', 'Notes'],
+  ];
+  let totRev=0, totCogs=0, totGross=0, totOpex=0, totNet=0;
+  entries.forEach(e => {
+    const cogs = (e.cogs||0)+(e.extraCost||0);
+    totRev+=e.revenue; totCogs+=cogs; totGross+=e.grossProfit; totOpex+=(e.dailyOpex||0); totNet+=e.netProfit;
+    const status = e.netProfit > 0 ? 'PROFIT' : e.netProfit >= 0 ? 'BREAK EVEN' : 'LOSS';
+    rows.push([e.date, e.channel, e.revenue.toFixed(2), cogs.toFixed(2), e.grossProfit.toFixed(2), (e.dailyOpex||0).toFixed(2), e.netProfit.toFixed(2), status, e.notes||'']);
+  });
+  rows.push(['']);
+  rows.push(['TOTAL', '', totRev.toFixed(2), totCogs.toFixed(2), totGross.toFixed(2), totOpex.toFixed(2), totNet.toFixed(2), totNet>0?'PROFITABLE':'LOSS', '']);
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:14},{wch:10},{wch:14},{wch:12},{wch:16},{wch:14},{wch:14},{wch:12},{wch:24}];
+  XLSX.utils.book_append_sheet(wb, ws, 'P&L Report');
+  XLSX.writeFile(wb, 'RiaPetMart_PnL_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  showNotification('✅ P&L Excel downloaded!');
+}
+
+// Set default date for P&L form
+function initPnlForm() {
+  const d = document.getElementById('pnl-date');
+  if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+}
+
 // ============================================================
 // INIT
 // ============================================================
@@ -1313,6 +1883,11 @@ function init() {
   if (!claudeKey) {
     document.getElementById('setup-banner').style.display = 'block';
   }
+  
+  renderOpexList();
+  renderBundlePicker();
+  renderPnlPage();
+  initPnlForm();
   
   // Drag-drop on upload zone
   const zone = document.getElementById('upload-zone');
@@ -1338,10 +1913,13 @@ function showPage(page) {
       n.classList.add('active');
     }
   });
-  if (page === 'products') renderProductsTable();
-  if (page === 'pricing') renderPricingOverview();
-  if (page === 'sheets') renderSheetsPage();
+  if (page === 'products')   renderProductsTable();
+  if (page === 'pricing')    renderPricingOverview();
+  if (page === 'sheets')     renderSheetsPage();
   if (page === 'promotions') renderPromos();
+  if (page === 'bundle')     { renderBundlePicker(); renderBundleSummary(); }
+  if (page === 'pnl')        { renderPnlPage(); initPnlForm(); }
+  if (page === 'settings')   renderOpexList();
 }
 
 // ============================================================
@@ -1728,7 +2306,11 @@ function renderExtractedInvoice(data) {
         const netUnit = parseFloat(item.net_unit_price)||(parseFloat(item.unit_price||0)-parseFloat(item.discount_per_unit||0));
         const landed = Math.max(0, netUnit - invoiceDiscountPerUnit + extraChargesPerUnit);
         return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px">
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${item.product_name||''}">${(item.product_name||'Item '+(idx+1)).substring(0,30)}</span>
+          <input type="text" value="${item.product_name||'Item '+(idx+1)}"
+            id="product-name-${idx}"
+            style="flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;min-width:0"
+            oninput="updateProductName(${idx}, this.value)"
+            title="Click to edit product name">
           <span style="color:var(--text-muted)">Landed cost/unit:</span>
           <span style="color:var(--text-muted)">RM</span>
           <input type="number" step="0.01" value="${landed.toFixed(2)}"
@@ -1752,8 +2334,13 @@ function updateLandedCost(idx, val) {
   const data = state.currentInvoiceData;
   if (!data || !data.items[idx]) return;
   data.items[idx]._landedCost = parseFloat(val) || 0;
-  // Re-render pricing suggestions with updated cost
   renderPricingSuggestions(data);
+}
+
+function updateProductName(idx, val) {
+  const data = state.currentInvoiceData;
+  if (!data || !data.items[idx]) return;
+  data.items[idx].product_name = val;
 }
 
 // ============================================================
@@ -1910,6 +2497,19 @@ async function saveToSheets() {
   
   const s = getSettings();
   
+  // Check for duplicate invoice number
+  const dupCheck = state.invoices.find(inv =>
+    inv.invoice_number && data.invoice_number &&
+    inv.invoice_number.trim().toLowerCase() === data.invoice_number.trim().toLowerCase()
+  );
+  if (dupCheck) {
+    const overwrite = confirm(
+      'Invoice "' + data.invoice_number + '" already exists (saved on ' +
+      new Date(dupCheck.savedAt).toLocaleDateString('en-MY') + ').\n\nSave again as a new record?'
+    );
+    if (!overwrite) { showNotification('Save cancelled — duplicate invoice.'); return; }
+  }
+
   // Save to local state
   const invoice = {
     id: Date.now(),
@@ -1991,6 +2591,8 @@ async function pushToGoogleSheets(invoiceData) {
       invoiceData.synced = true;
       saveToStorage();
       showNotification('✅ Synced to Google Sheets!');
+      // Also sync pricing tab after invoice save
+      await syncPricingTab();
     } else {
       throw new Error(result.error || result.message || 'Unknown error from Sheets');
     }
@@ -2004,6 +2606,31 @@ async function pushToGoogleSheets(invoiceData) {
     // Show detailed error to help debug
     showNotification('❌ Sheets sync failed: ' + err.message + ' — check Apps Script URL in Settings');
     addSyncLog((invoiceData.invoice_number || 'Invoice') + ' [FAILED]', 'error');
+  }
+}
+
+async function syncPricingTab() {
+  const s = getSettings();
+  if (!s.appsScriptUrl || state.products.length === 0) return;
+  try {
+    const productsData = state.products.map(p => ({
+      name: p.name || '',
+      sku: p.sku || '',
+      category: p.category || '',
+      supplier: p.supplier || '',
+      cost: p.cost || 0,
+      offline_price: p.prices?.offline || 0,
+      shopee_price:  p.prices?.shopee  || 0,
+      lazada_price:  p.prices?.lazada  || 0,
+      tiktok_price:  p.prices?.tiktok  || 0,
+    }));
+    const params = new URLSearchParams({
+      action: 'syncPricing',
+      products: JSON.stringify(productsData),
+    });
+    await fetch(s.appsScriptUrl + '?' + params.toString(), { method: 'GET', redirect: 'follow' });
+  } catch(e) {
+    console.warn('Pricing tab sync failed:', e.message);
   }
 }
 
@@ -2110,7 +2737,7 @@ function renderPricingOverview() {
           <div style="font-size:11px;color:${marginColor(mTT)};font-weight:500">${mTT}% margin</div>
         </td>
         <td>
-          <button class="btn btn-sm btn-secondary" onclick="recalcProduct('${p.id}')">↻ Recalc</button>
+          <button class="btn btn-sm btn-secondary" onclick="recalcProduct(this.dataset.id)" data-id="${p.id}">↻ Recalc</button>
         </td>
       </tr>`;
   }).join('');
@@ -2145,12 +2772,14 @@ function renderPricingOverview() {
 }
 
 function recalcProduct(id) {
-  const p = state.products.find(x => String(x.id) === String(id));
-  if (!p || !p.cost) return;
+  // IDs can be floats — compare loosely
+  const p = state.products.find(x => String(x.id).replace('.','') === String(id).replace('.','') || String(x.id) === String(id));
+  if (!p) { showNotification('Product not found.'); return; }
+  if (!p.cost || p.cost <= 0) { showNotification('No cost price set for this product.'); return; }
   p.prices = calcPrices(p.cost);
   saveToStorage();
   renderPricingOverview();
-  showNotification('Prices recalculated.');
+  showNotification('✅ Prices recalculated for ' + p.name);
 }
 
 // ============================================================
@@ -2402,11 +3031,10 @@ function saveProductFromModal() {
 // DASHBOARD
 // ============================================================
 function calcProjection(inv) {
-  // For each item in invoice, calc profit if 100% sold at each channel
   const items = inv.items || [];
-  let totalCost = 0, offlineRev = 0, shopeeRev = 0, lazadaRev = 0, tiktokRev = 0;
+  let totalCost=0, offlineRev=0, shopeeRev=0, lazadaRev=0, tiktokRev=0;
   items.forEach(item => {
-    const cost = parseFloat(item.unit_price) || 0;
+    const cost = parseFloat(item._landedCost || item.net_unit_price || item.unit_price) || 0;
     const qty  = parseInt(item.quantity) || 1;
     if (cost <= 0) return;
     const prices = calcPrices(cost);
@@ -2425,61 +3053,159 @@ function calcProjection(inv) {
   };
 }
 
-function renderDashboard() {
-  const recentList = document.getElementById('recent-invoices-list');
-  const dashPromos = document.getElementById('dashboard-promos');
+let _invSearchTerm = '';
+function filterInvoices() {
+  _invSearchTerm = document.getElementById('inv-search')?.value?.toLowerCase() || '';
+  renderInvoiceList();
+}
 
-  // ── Recent invoices with per-invoice projection ──
-  if (state.invoices.length === 0) {
-    recentList.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:20px 0;text-align:center">No invoices yet. Scan your first invoice to get started.</div>';
-  } else {
-    recentList.innerHTML = state.invoices.slice(-5).reverse().map(inv => {
-      const proj = calcProjection(inv);
-      const hasItems = (inv.items||[]).length > 0 && proj.totalCost > 0;
-      return `
-        <div style="padding:12px 0; border-bottom:1px solid var(--border)">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:${hasItems?'10px':'0'}">
-            <div>
-              <div style="font-weight:600; font-size:13px">${inv.invoice_number || 'Invoice'}</div>
-              <div style="font-size:11px; color:var(--text-muted)">${inv.supplier_name||'—'} · ${inv.invoice_date||'—'} · ${(inv.items||[]).length} items</div>
-            </div>
-            <div style="text-align:right">
-              <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">RM ${(inv.total_amount||0).toFixed(2)}</div>
-              <span class="badge ${inv.synced?'badge-teal':'badge-amber'}" style="font-size:10px">${inv.synced?'Synced':'Local'}</span>
-            </div>
-          </div>
-          ${hasItems ? `
-          <div style="background:var(--gray-100);border-radius:8px;padding:10px 12px;">
-            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-bottom:8px">💰 100% Sold Profit Projection</div>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
-              ${[
-                {label:'🏪 Offline', profit: proj.offline.profit, rev: proj.offline.rev},
-                {label:'🛒 Shopee',  profit: proj.shopee.profit,  rev: proj.shopee.rev},
-                {label:'📦 Lazada',  profit: proj.lazada.profit,  rev: proj.lazada.rev},
-                {label:'🎵 TikTok',  profit: proj.tiktok.profit,  rev: proj.tiktok.rev},
-              ].map(ch => `
-                <div style="background:white;border-radius:6px;padding:8px;border:1px solid var(--border);text-align:center">
-                  <div style="font-size:9px;color:var(--text-muted);margin-bottom:3px">${ch.label}</div>
-                  <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--teal)">RM ${ch.profit.toFixed(0)}</div>
-                  <div style="font-size:9px;color:var(--text-muted)">rev RM ${ch.rev.toFixed(0)}</div>
-                </div>
-              `).join('')}
-            </div>
-            <div style="margin-top:6px;font-size:10px;color:var(--text-muted)">Stock cost: RM ${proj.totalCost.toFixed(2)} · Best channel: ${
-              (() => {
-                const channels = [{n:'Offline',p:proj.offline.profit},{n:'Shopee',p:proj.shopee.profit},{n:'Lazada',p:proj.lazada.profit},{n:'TikTok',p:proj.tiktok.profit}];
-                const best = channels.reduce((a,b) => b.p > a.p ? b : a);
-                return '<strong style="color:var(--teal)">' + best.n + '</strong> (RM ' + best.p.toFixed(0) + ' profit)';
-              })()
-            }</div>
-          </div>` : ''}
-        </div>
-      `;
-    }).join('');
+function renderInvoiceList() {
+  const el = document.getElementById('recent-invoices-list');
+  if (!el) return;
+
+  let list = [...state.invoices].reverse();
+  if (_invSearchTerm) {
+    list = list.filter(inv =>
+      (inv.invoice_number||'').toLowerCase().includes(_invSearchTerm) ||
+      (inv.supplier_name||'').toLowerCase().includes(_invSearchTerm)
+    );
   }
 
-  // ── Promo suggestions ──
-  if (state.products.length > 0) {
+  if (list.length === 0) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px 0">' +
+      (_invSearchTerm ? 'No invoices match your search.' : 'No invoices yet. Scan your first invoice!') + '</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(inv => {
+    const proj = calcProjection(inv);
+    const hasProj = proj.totalCost > 0;
+    const best = hasProj ? [{n:'Offline',p:proj.offline.profit},{n:'Shopee',p:proj.shopee.profit},{n:'Lazada',p:proj.lazada.profit},{n:'TikTok',p:proj.tiktok.profit}]
+      .reduce((a,b)=>b.p>a.p?b:a) : null;
+    return `
+      <div style="padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;transition:box-shadow 0.15s"
+           onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow='none'">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <input type="checkbox" style="margin-top:3px;cursor:pointer;flex-shrink:0" onchange="toggleInvoiceSelect()" data-inv-id="${inv.id}">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+              <div>
+                <span style="font-weight:600;font-size:13px">${inv.invoice_number||'Invoice'}</span>
+                <span class="badge ${inv.synced?'badge-teal':'badge-amber'}" style="font-size:10px;margin-left:6px">${inv.synced?'✓ Synced':'Local'}</span>
+              </div>
+              <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;flex-shrink:0;margin-left:8px">RM ${(inv.total_amount||0).toFixed(2)}</div>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:${hasProj?'10px':'0'}">
+              ${inv.supplier_name||'—'} · ${inv.invoice_date||'—'} · ${(inv.items||[]).length} items
+            </div>
+            ${hasProj ? `
+            <div style="background:var(--gray-100);border-radius:8px;padding:8px 10px">
+              <div style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">If 100% Sold — Profit</div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">
+                ${[
+                  {l:'Offline', p:proj.offline.profit},
+                  {l:'Shopee',  p:proj.shopee.profit},
+                  {l:'Lazada',  p:proj.lazada.profit},
+                  {l:'TikTok',  p:proj.tiktok.profit},
+                ].map(ch=>`
+                  <div style="background:white;border-radius:6px;padding:6px;text-align:center;border:1px solid var(--border)${best&&best.n===ch.l?';border-color:var(--teal-mid)':''}">
+                    <div style="font-size:9px;color:var(--text-muted)">${ch.l}</div>
+                    <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:${best&&best.n===ch.l?'var(--teal)':'var(--text)'}">RM ${ch.p.toFixed(0)}</div>
+                  </div>`).join('')}
+              </div>
+              <div style="font-size:10px;margin-top:6px;color:var(--text-muted)">
+                Cost: RM ${proj.totalCost.toFixed(2)} · 
+                Best: <strong style="color:var(--teal)">${best?.n||'—'}</strong> (RM ${best?.p.toFixed(0)||0} profit)
+              </div>
+            </div>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleInvoiceSelect() {
+  const checked = document.querySelectorAll('[data-inv-id]:checked').length;
+  const btn = document.getElementById('del-inv-btn');
+  if (btn) btn.style.display = checked > 0 ? 'inline-flex' : 'none';
+}
+
+function removeSelectedInvoices() {
+  const checked = [...document.querySelectorAll('[data-inv-id]:checked')];
+  if (checked.length === 0) return;
+  if (!confirm('Remove ' + checked.length + ' invoice(s)? This cannot be undone.')) return;
+  const ids = checked.map(el => String(el.dataset.invId));
+  state.invoices = state.invoices.filter(inv => !ids.includes(String(inv.id)));
+  saveToStorage();
+  updateStats();
+  renderDashboard();
+  showNotification('🗑️ ' + ids.length + ' invoice(s) removed.');
+}
+
+function renderProfitProjection() {
+  const el = document.getElementById('profit-projection-content');
+  const bdEl = document.getElementById('channel-breakdown-card');
+  const bdContent = document.getElementById('channel-breakdown-content');
+  if (!el) return;
+
+  if (state.invoices.length === 0) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0">Scan invoices to see projections.</div>';
+    if (bdEl) bdEl.style.display = 'none';
+    return;
+  }
+
+  let totCost=0, totOff=0, totShp=0, totLaz=0, totTT=0;
+  state.invoices.forEach(inv => {
+    const p = calcProjection(inv);
+    totCost += p.totalCost;
+    totOff  += p.offline.profit;
+    totShp  += p.shopee.profit;
+    totLaz  += p.lazada.profit;
+    totTT   += p.tiktok.profit;
+  });
+
+  const channels = [{n:'Offline',p:totOff},{n:'Shopee',p:totShp},{n:'Lazada',p:totLaz},{n:'TikTok',p:totTT}];
+  const best = channels.reduce((a,b)=>b.p>a.p?b:a);
+  const maxP = Math.max(...channels.map(c=>c.p), 1);
+
+  el.innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Total stock cost</div>
+      <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:600">RM ${totCost.toFixed(2)}</div>
+    </div>
+    ${channels.map(ch=>`
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span style="color:${ch.n===best.n?'var(--teal)':'var(--text-muted)'};font-weight:${ch.n===best.n?'600':'400'}">${ch.n==='Offline'?'🏪':'ch.n'==='Shopee'?'🛒':ch.n==='Lazada'?'📦':'🎵'} ${ch.n} ${ch.n===best.n?'⭐':''}</span>
+          <span style="font-family:'DM Mono',monospace;font-weight:600;color:${ch.n===best.n?'var(--teal)':'var(--text)'}">RM ${ch.p.toFixed(0)}</span>
+        </div>
+        <div style="height:6px;background:var(--gray-100);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${Math.max(4,(ch.p/maxP*100)).toFixed(0)}%;background:${ch.n===best.n?'var(--teal-mid)':'var(--gray-200)'};border-radius:3px;transition:width 0.4s"></div>
+        </div>
+      </div>`).join('')}
+    <div style="margin-top:10px;padding:8px 10px;background:var(--teal-light);border-radius:6px;font-size:11px;color:var(--teal)">
+      🏆 Best channel: <strong>${best.n}</strong> — RM ${best.p.toFixed(2)} total profit if all stock sold
+    </div>`;
+
+  if (bdEl) bdEl.style.display = 'block';
+  if (bdContent) {
+    bdContent.innerHTML = channels.map(ch=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px">${ch.n==='Offline'?'🏪':ch.n==='Shopee'?'🛒':ch.n==='Lazada'?'📦':'🎵'} ${ch.n}</span>
+        <div style="text-align:right">
+          <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--teal)">RM ${ch.p.toFixed(2)}</div>
+          <div style="font-size:10px;color:var(--text-muted)">${totCost>0?((ch.p/totCost)*100).toFixed(1)+'% ROI':''}</div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function renderDashboard() {
+  renderInvoiceList();
+  renderProfitProjection();
+
+  const dashPromos = document.getElementById('dashboard-promos');
+  if (state.products.length > 0 && dashPromos) {
     const items = state.products.slice(0, 2).map(p => ({ product_name: p.name, unit_price: p.cost }));
     dashPromos.innerHTML = '<div style="font-size:12px">' + generateBundleSuggestions(items) + '</div>';
   }
@@ -2593,14 +3319,19 @@ document.getElementById('add-product-modal').addEventListener('click', function(
 
 // INIT — show login screen first
 (function() {
+  const loginScreen = document.getElementById('login-screen');
+  const mainApp     = document.getElementById('main-app');
   if (isLoggedIn()) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'flex';
+    loginScreen.style.display = 'none';
+    mainApp.style.display     = 'flex';
     init();
   } else {
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('main-app').style.display = 'none';
-    setTimeout(() => document.getElementById('login-user').focus(), 100);
+    loginScreen.style.display = 'flex';
+    mainApp.style.display     = 'none';
+    setTimeout(() => {
+      const u = document.getElementById('login-user');
+      if (u) u.focus();
+    }, 150);
   }
 })();
 </script>
@@ -2663,6 +3394,71 @@ document.getElementById('add-product-modal').addEventListener('click', function(
     </div>
   </div>
 </div>
+
+
+<!-- P&L ENTRY MODAL -->
+<div class="modal-overlay" id="pnl-entry-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📈 Log Today's Sales</div>
+      <button class="modal-close" onclick="closeModal('pnl-entry-modal')">✕</button>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Date *</label>
+        <input class="form-input" type="date" id="pnl-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Channel</label>
+        <select class="form-input" id="pnl-channel">
+          <option value="all">All Channels</option>
+          <option value="offline">🏪 Offline</option>
+          <option value="shopee">🛒 Shopee</option>
+          <option value="lazada">📦 Lazada</option>
+          <option value="tiktok">🎵 TikTok</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Total Revenue (RM) *</label>
+      <input class="form-input" type="number" id="pnl-revenue" placeholder="0.00" step="0.01" oninput="calcPnlPreview()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cost of Goods Sold — COGS (RM) *</label>
+      <input class="form-input" type="number" id="pnl-cogs" placeholder="0.00" step="0.01" oninput="calcPnlPreview()">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Total cost price of all items sold today</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Extra Variable Costs today (RM)</label>
+      <input class="form-input" type="number" id="pnl-extra-cost" placeholder="0.00" step="0.01" oninput="calcPnlPreview()">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:3px">e.g. delivery, packaging, commission</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <input class="form-input" id="pnl-notes" placeholder="e.g. Weekend sale, promo day...">
+    </div>
+    <!-- Live P&L Preview -->
+    <div id="pnl-modal-preview" style="background:var(--gray-100);border-radius:8px;padding:14px;margin-bottom:16px;display:none">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-bottom:10px">Live P&amp;L Preview</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+        <div>Revenue: <strong id="prev-rev">RM 0</strong></div>
+        <div>COGS: <strong id="prev-cogs" style="color:var(--coral)">RM 0</strong></div>
+        <div>Gross Profit: <strong id="prev-gross">RM 0</strong></div>
+        <div>Daily OPEX: <strong id="prev-opex" style="color:var(--amber)">RM 0</strong></div>
+      </div>
+      <div style="margin-top:10px;padding:10px;border-radius:6px;text-align:center" id="prev-net-box">
+        <div style="font-size:11px;color:var(--text-muted)">Net Profit</div>
+        <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace" id="prev-net">RM 0</div>
+        <div style="font-size:12px" id="prev-status">—</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1" onclick="savePnlEntry()">Save Entry</button>
+      <button class="btn btn-secondary" onclick="closeModal('pnl-entry-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 
 </div><!-- end main-app -->
 </body>
